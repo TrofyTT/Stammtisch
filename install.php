@@ -142,27 +142,51 @@ if (!function_exists('deleteDirectory')) {
 }
 
 // Prüfe ob bereits installiert
+writeLog('Prüfe Installation-Status...');
 $configFile = __DIR__ . '/config.php';
 $installed = false;
 $configExists = file_exists($configFile);
+writeLog('Config-Datei existiert: ' . ($configExists ? 'Ja (' . $configFile . ')' : 'Nein'));
 
 if ($configExists) {
-    require_once $configFile;
+    writeLog('Lade config.php...');
     try {
-        $db = getDB();
-        // Prüfe ob Tabellen existieren
-        $stmt = $db->query("SHOW TABLES LIKE 'users'");
-        $installed = $stmt->rowCount() > 0;
+        require_once $configFile;
+        writeLog('config.php erfolgreich geladen');
+        if (function_exists('getDB')) {
+            writeLog('getDB() Funktion verfügbar - teste Datenbankverbindung...');
+            try {
+                $db = getDB();
+                writeLog('Datenbankverbindung erfolgreich');
+                // Prüfe ob Tabellen existieren
+                $stmt = $db->query("SHOW TABLES LIKE 'users'");
+                $installed = $stmt->rowCount() > 0;
+                writeLog('Tabelle "users" existiert: ' . ($installed ? 'Ja' : 'Nein'));
+            } catch (PDOException $e) {
+                writeErrorLog('PDO Fehler bei Datenbankverbindung', $e);
+                $installed = false;
+            }
+        } else {
+            writeLog('WARNUNG: getDB() Funktion nicht verfügbar nach require config.php');
+        }
     } catch (Exception $e) {
-        // Config existiert, aber DB nicht erreichbar
+        writeErrorLog('Fehler beim Laden von config.php', $e);
+        $installed = false;
+    } catch (Error $e) {
+        writeErrorLog('PHP Fehler beim Laden von config.php', $e);
         $installed = false;
     }
+} else {
+    writeLog('Config-Datei nicht gefunden - Installation nötig');
 }
 
+writeLog('Bestimme Step...');
 $step = $_GET['step'] ?? ($installed ? 'update' : 'install');
+writeLog("Step: $step (installed: " . ($installed ? 'true' : 'false') . ")");
 $error = null;
 $success = null;
 $output = [];
+writeLog('Variablen initialisiert');
 
 // Prüfe ob Dateien heruntergeladen werden müssen
 $needsDownload = !$installed && (
