@@ -61,18 +61,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 $sql = file_get_contents($sqlFile);
+                
+                // Entferne Kommentare, die CREATE DATABASE oder USE enthalten
+                $sql = preg_replace('/^--.*CREATE\s+DATABASE.*$/mi', '', $sql);
+                $sql = preg_replace('/^--.*USE.*$/mi', '', $sql);
+                
                 // Ersetze USE statement und alle Datenbanknamen
                 // Ersetze Platzhalter in SQL (falls vorhanden)
-                $sql = preg_replace('/USE\s+\[DEINE_DATENBANK\]\s*;/i', "USE `$db_name`;", $sql);
-                $sql = preg_replace('/CREATE\s+DATABASE\s+IF\s+NOT\s+EXISTS\s+\[DEINE_DATENBANK\]/i', "CREATE DATABASE IF NOT EXISTS `$db_name`", $sql);
+                $sql = preg_replace('/USE\s+\[DEINE_DATENBANK\]\s*;/i', '', $sql); // Entferne Platzhalter USE
+                $sql = preg_replace('/CREATE\s+DATABASE\s+IF\s+NOT\s+EXISTS\s+\[DEINE_DATENBANK\]/i', '', $sql); // Entferne Platzhalter CREATE
                 
                 // Ersetze auch alle alten Datenbanknamen, die möglicherweise noch im SQL stehen
                 // (z.B. von früheren Versionen)
                 $sql = preg_replace('/\bkdph7973_pimmel\b/i', $db_name, $sql);
-                $sql = preg_replace('/USE\s+[^;]+;\s*\n/i', "USE `$db_name`;\n", $sql);
                 
-                // Führe SQL aus
-                $testDb->exec($sql);
+                // Entferne alle USE Statements (wir sind bereits in der richtigen DB)
+                $sql = preg_replace('/^\s*USE\s+[^;]+;\s*$/mi', '', $sql);
+                
+                // Aufteilen in einzelne Statements und ausführen
+                $statements = array_filter(
+                    array_map('trim', explode(';', $sql)),
+                    function($stmt) {
+                        return !empty($stmt) && !preg_match('/^--/', $stmt);
+                    }
+                );
+                
+                foreach ($statements as $statement) {
+                    if (!empty($statement)) {
+                        try {
+                            $testDb->exec($statement);
+                        } catch (PDOException $e) {
+                            // Ignoriere Fehler bei "table already exists" etc.
+                            if (strpos($e->getMessage(), 'already exists') === false && 
+                                strpos($e->getMessage(), 'Duplicate') === false) {
+                                throw $e; // Andere Fehler weiterwerfen
+                            }
+                        }
+                    }
+                }
                 
                 // Erstelle config.php
                 $configContent = <<<PHP
