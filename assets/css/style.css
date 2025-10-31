@@ -651,31 +651,30 @@ body {
     border-radius: 10px;
 }
 
-.user-anwesenheit-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
 .user-anwesenheit-item-name {
     font-weight: 600;
+    margin-bottom: 12px;
+    font-size: 16px;
 }
 
 .user-anwesenheit-status-buttons {
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    width: 100%;
 }
 
 .status-btn {
-    padding: 6px 12px;
+    flex: 1;
+    padding: 12px 16px;
     border: 1px solid var(--border);
     background: transparent;
     color: var(--text-secondary);
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
+    font-weight: 500;
     transition: all 0.2s ease;
+    text-align: center;
 }
 
 .status-btn.active.anwesend {

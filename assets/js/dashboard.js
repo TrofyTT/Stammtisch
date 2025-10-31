@@ -118,22 +118,20 @@ function renderAnwesenheitForm(users, anwesenheiten) {
         
         html += `
             <div class="user-anwesenheit-item">
-                <div class="user-anwesenheit-item-header">
-                    <span class="user-anwesenheit-item-name">${escapeHtml(user.name)}</span>
-                    <div class="user-anwesenheit-status-buttons">
-                        <button class="status-btn anwesend ${status === 'anwesend' ? 'active' : ''}" 
-                                data-user-id="${user.id}" data-status="anwesend">
-                            Anwesend
-                        </button>
-                        <button class="status-btn nicht-anwesend ${status === 'nicht_anwesend' ? 'active' : ''}" 
-                                data-user-id="${user.id}" data-status="nicht_anwesend">
-                            Nicht Anwesend
-                        </button>
-                        <button class="status-btn unentschuldigt ${status === 'unentschuldigt' ? 'active' : ''}" 
-                                data-user-id="${user.id}" data-status="unentschuldigt">
-                            Unentschuldigt
-                        </button>
-                    </div>
+                <div class="user-anwesenheit-item-name">${escapeHtml(user.name)}</div>
+                <div class="user-anwesenheit-status-buttons">
+                    <button class="status-btn anwesend ${status === 'anwesend' ? 'active' : ''}"
+                            data-user-id="${user.id}" data-status="anwesend">
+                        Anwesend
+                    </button>
+                    <button class="status-btn nicht-anwesend ${status === 'nicht_anwesend' ? 'active' : ''}"
+                            data-user-id="${user.id}" data-status="nicht_anwesend">
+                        Nicht Anwesend
+                    </button>
+                    <button class="status-btn unentschuldigt ${status === 'unentschuldigt' ? 'active' : ''}"
+                            data-user-id="${user.id}" data-status="unentschuldigt">
+                        Unentschuldigt
+                    </button>
                 </div>
             </div>
         `;
