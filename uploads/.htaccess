@@ -1,0 +1,7 @@
+# Zugriff auf Avatar-Uploads erlauben
+Options -Indexes
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+

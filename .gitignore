@@ -1,0 +1,11 @@
+# Uploads (sollen nicht ins Git)
+uploads/avatars/*
+!uploads/avatars/.htaccess
+
+# Lokale Konfiguration
+config.local.php
+
+# System Files
+.DS_Store
+Thumbs.db
+
