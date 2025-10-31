@@ -61,10 +61,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 $sql = file_get_contents($sqlFile);
+                $output[] = '📄 SQL-Datei geladen: ' . number_format(strlen($sql)) . ' Bytes';
+                
+                // DEBUG: Zeige alle Vorkommen von Datenbanknamen
+                $dbNameMatches = [];
+                preg_match_all('/\b(kdph7973_\w+)\b/i', $sql, $dbNameMatches);
+                if (!empty($dbNameMatches[1])) {
+                    $output[] = '⚠️ DEBUG: Gefundene Datenbanknamen im SQL: ' . implode(', ', array_unique($dbNameMatches[1]));
+                }
                 
                 // Entferne Kommentare, die CREATE DATABASE oder USE enthalten
+                $sqlBefore = $sql;
                 $sql = preg_replace('/^--.*CREATE\s+DATABASE.*$/mi', '', $sql);
                 $sql = preg_replace('/^--.*USE.*$/mi', '', $sql);
+                $output[] = '✅ Kommentare entfernt';
                 
                 // Ersetze USE statement und alle Datenbanknamen
                 // Ersetze Platzhalter in SQL (falls vorhanden)
@@ -73,10 +83,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Ersetze auch alle alten Datenbanknamen, die möglicherweise noch im SQL stehen
                 // (z.B. von früheren Versionen)
-                $sql = preg_replace('/\bkdph7973_pimmel\b/i', $db_name, $sql);
+                $oldDbNames = ['kdph7973_pimmel', 'kdph7973_sven'];
+                foreach ($oldDbNames as $oldDbName) {
+                    if ($oldDbName !== $db_name && stripos($sql, $oldDbName) !== false) {
+                        $output[] = '🔄 Ersetze alten DB-Namen: ' . $oldDbName . ' → ' . $db_name;
+                        $sql = preg_replace('/\b' . preg_quote($oldDbName, '/') . '\b/i', $db_name, $sql);
+                    }
+                }
                 
                 // Entferne alle USE Statements (wir sind bereits in der richtigen DB)
+                $useCount = preg_match_all('/^\s*USE\s+[^;]+;\s*$/mi', $sql, $useMatches);
+                if ($useCount > 0) {
+                    $output[] = '🔄 Entferne ' . $useCount . ' USE-Statement(s): ' . implode(', ', $useMatches[0]);
+                }
                 $sql = preg_replace('/^\s*USE\s+[^;]+;\s*$/mi', '', $sql);
+                
+                // Prüfe nochmal nach dem alten DB-Namen
+                if (stripos($sql, 'kdph7973_pimmel') !== false) {
+                    $output[] = '❌ WARNUNG: Alter DB-Name "kdph7973_pimmel" noch im SQL gefunden!';
+                    $output[] = 'DEBUG: Erste 500 Zeichen des SQL: ' . substr($sql, 0, 500);
+                }
                 
                 // Aufteilen in einzelne Statements und ausführen
                 $statements = array_filter(
@@ -86,19 +112,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 );
                 
-                foreach ($statements as $statement) {
+                $output[] = '📊 Gefundene SQL-Statements: ' . count($statements);
+                $successCount = 0;
+                $errorCount = 0;
+                
+                foreach ($statements as $idx => $statement) {
                     if (!empty($statement)) {
+                        // Prüfe nochmal auf alten DB-Namen
+                        if (stripos($statement, 'kdph7973_pimmel') !== false) {
+                            $output[] = '❌ FEHLER: Statement #' . ($idx + 1) . ' enthält noch "kdph7973_pimmel"!';
+                            $output[] = 'Statement: ' . substr($statement, 0, 200);
+                            $statement = preg_replace('/\bkdph7973_pimmel\b/i', $db_name, $statement);
+                            $output[] = 'Korrigiertes Statement: ' . substr($statement, 0, 200);
+                        }
+                        
                         try {
                             $testDb->exec($statement);
+                            $successCount++;
+                            if ($idx < 5 || $idx % 10 == 0) { // Zeige erste 5 und dann jede 10.
+                                $output[] = '✅ Statement #' . ($idx + 1) . ' erfolgreich';
+                            }
                         } catch (PDOException $e) {
+                            $errorCount++;
+                            $errorMsg = $e->getMessage();
+                            $output[] = '❌ FEHLER bei Statement #' . ($idx + 1) . ': ' . $errorMsg;
+                            $output[] = 'Statement Anfang: ' . substr($statement, 0, 150);
+                            
                             // Ignoriere Fehler bei "table already exists" etc.
-                            if (strpos($e->getMessage(), 'already exists') === false && 
-                                strpos($e->getMessage(), 'Duplicate') === false) {
-                                throw $e; // Andere Fehler weiterwerfen
+                            if (strpos($errorMsg, 'already exists') === false && 
+                                strpos($errorMsg, 'Duplicate') === false &&
+                                strpos($errorMsg, 'Access denied') === false) {
+                                // Bei Access denied wollen wir aber stoppen!
+                                if (strpos($errorMsg, 'Access denied') !== false) {
+                                    $output[] = '🔴 KRITISCHER FEHLER: Access denied - prüfe Datenbankname und Berechtigungen!';
+                                    $output[] = 'Verwendete DB: ' . $db_name;
+                                    $output[] = 'Verwendeter User: ' . $db_user;
+                                    throw $e; // Stoppe bei Access denied
+                                }
                             }
                         }
                     }
                 }
+                
+                $output[] = '✅ SQL-Import abgeschlossen: ' . $successCount . ' erfolgreich, ' . $errorCount . ' Fehler';
                 
                 // Erstelle config.php
                 $configContent = <<<PHP
