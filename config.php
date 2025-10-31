@@ -5,12 +5,14 @@ if (file_exists(__DIR__ . '/config.local.php')) {
     // Lokale Entwicklung
     require_once __DIR__ . '/config.local.php';
 } else {
-    // Produktion (Alfahosting)
+    // Produktion - Credentials werden bei der Installation gesetzt
+    // Falls keine config.local.php existiert, werden die Werte aus install.php verwendet
+    // Oder du erstellst manuell eine config.local.php mit den echten Credentials
     define('DB_HOST', '127.0.0.1');
     define('DB_PORT', '3307');
-    define('DB_NAME', 'kdph7973_pimmel');
-    define('DB_USER', 'kdph7973_pimmel');
-    define('DB_PASS', 'Oh?oNQ&~M428FSv5');
+    define('DB_NAME', ''); // Wird bei Installation gesetzt
+    define('DB_USER', ''); // Wird bei Installation gesetzt
+    define('DB_PASS', ''); // Wird bei Installation gesetzt
 }
 
 // Session-Einstellungen

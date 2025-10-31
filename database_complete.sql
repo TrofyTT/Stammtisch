@@ -1,10 +1,11 @@
 -- ============================================
 -- Stammtisch App - Komplette Datenbankstruktur
--- Für Alfahosting (franggn.de)
 -- ============================================
+-- WICHTIG: Ersetze [DEINE_DATENBANK] mit deinem echten Datenbanknamen!
+-- Diese Datei sollte nicht ins Git committed werden, wenn sie echte Credentials enthält.
 
-CREATE DATABASE IF NOT EXISTS kdph7973_pimmel CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE kdph7973_pimmel;
+-- CREATE DATABASE IF NOT EXISTS [DEINE_DATENBANK] CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- USE [DEINE_DATENBANK];
 
 -- ============================================
 -- 1. Basis-Tabellen
