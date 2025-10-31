@@ -1,0 +1,92 @@
+═══════════════════════════════════════════════════════════
+    STAMMTISCH APP - FTP-UPLOAD SCHNELLSTART
+═══════════════════════════════════════════════════════════
+
+📦 MINDESTANFORDERUNG:
+   ✅ Nur install.php hochladen
+   ✅ Das war's!
+
+───────────────────────────────────────────────────────────
+
+🚀 SCHRITT-FÜR-SCHRITT:
+
+1. FTP-Programm öffnen (z.B. FileZilla)
+   └─ Server: ftp.deine-domain.de
+
+2. Navigiere zu:
+   └─ /public_html/ (cPanel)
+   └─ /httpdocs/ (Plesk)
+
+3. Dateien hochladen:
+   ✅ PFLICHT: install.php
+   ✅ Optional: .htaccess
+   ✅ Optional: logs/ Ordner
+   ✅ Optional: database_complete.sql (Fallback)
+
+4. Browser öffnen:
+   └─ https://deine-domain.de/install.php
+
+5. Installation folgen:
+   ├─ Dateien werden automatisch von GitHub geladen
+   ├─ Datenbank-Zugangsdaten eingeben
+   ├─ Admin-Account erstellen
+   └─ Fertig! 🎉
+
+───────────────────────────────────────────────────────────
+
+💡 WICHTIG:
+
+   ⚠️  Du musst NICHT alle Dateien hochladen!
+   ⚠️  install.php lädt automatisch von GitHub!
+   ⚠️  Nur bei Problemen: Alle Dateien manuell hochladen
+
+───────────────────────────────────────────────────────────
+
+📁 ENTHALTENE DATEIEN:
+
+   install.php              → PFLICHT (Haupt-Installer)
+   database_complete.sql    → Optional (Fallback)
+   .htaccess                → Optional (Sicherheit)
+   config.local.php.example → Optional (für Entwicklung)
+   logs/                    → Optional (Logging)
+   README.md                → Ausführliche Anleitung
+
+───────────────────────────────────────────────────────────
+
+⚙️  DATEI-BERECHTIGUNGEN (CHMOD):
+
+   install.php    → 644
+   .htaccess      → 644
+   logs/          → 755
+
+───────────────────────────────────────────────────────────
+
+❌ HÄUFIGE FEHLER:
+
+   "500 Error"
+   └─ Prüfe logs/install_DATUM.log
+   └─ Setze logs/ Berechtigung auf 755
+
+   "GitHub-Download fehlschlägt"
+   └─ Lade auch database_complete.sql hoch
+
+   "Permission Denied"
+   └─ Erstelle logs/ Ordner manuell
+   └─ Setze Berechtigung auf 755
+
+───────────────────────────────────────────────────────────
+
+📧 SUPPORT:
+
+   GitHub: https://github.com/TrofyTT/Stammtisch/issues
+   Logs: Prüfe logs/install_DATUM.log
+
+───────────────────────────────────────────────────────────
+
+✅ NACH DER INSTALLATION:
+
+   1. Lösche install.php (Sicherheit!)
+   2. Login unter: https://deine-domain.de/
+   3. Viel Spaß! 🎉
+
+═══════════════════════════════════════════════════════════

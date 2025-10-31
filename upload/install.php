@@ -1,6 +1,9 @@
 <?php
 // Installationsseite für Stammtisch App
 
+// Output-Buffering starten - ermöglicht Header-Redirects auch nach Output
+ob_start();
+
 // Fehleranzeige aktivieren für Debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -62,16 +65,29 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) use ($logFile) {
 });
 
 // Shutdown Handler - Fängt Fatal Errors ab, die nicht vom Error Handler gefangen werden
-register_shutdown_function(function() use ($logFile) {
-    $error = error_get_last();
-    if ($error !== NULL && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        $timestamp = date('Y-m-d H:i:s');
-        $logEntry = "[$timestamp] [FATAL ERROR - SHUTDOWN] " . $error['message'] . "\n";
-        $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] File: " . $error['file'] . "\n";
-        $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] Line: " . $error['line'] . "\n";
-        @file_put_contents($logFile, $logEntry, FILE_APPEND);
-    }
-});
+    register_shutdown_function(function() use ($logFile) {
+        $error = error_get_last();
+        if ($error !== NULL && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+            $timestamp = date('Y-m-d H:i:s');
+            $logEntry = "[$timestamp] [FATAL ERROR - SHUTDOWN] " . $error['message'] . "\n";
+            $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] File: " . $error['file'] . "\n";
+            $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] Line: " . $error['line'] . "\n";
+            $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] Type: " . $error['type'] . "\n";
+            @file_put_contents($logFile, $logEntry, FILE_APPEND);
+            
+            // Versuche auch im Browser anzuzeigen (falls noch möglich)
+            if (!headers_sent()) {
+                header('Content-Type: text/html; charset=utf-8');
+                echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fatal Error</title></head><body style="background: #000; color: #f00; padding: 30px; font-family: monospace;">';
+                echo '<h1>FATAL ERROR</h1>';
+                echo '<pre>' . htmlspecialchars($error['message']) . '</pre>';
+                echo '<p>File: ' . htmlspecialchars($error['file']) . '</p>';
+                echo '<p>Line: ' . $error['line'] . '</p>';
+                echo '<p>Log: logs/install_' . date('Y-m-d') . '.log</p>';
+                echo '</body></html>';
+            }
+        }
+    });
 
 // ============================================
 // LOGGING-SYSTEM
@@ -153,21 +169,32 @@ if ($configExists) {
     try {
         require_once $configFile;
         writeLog('config.php erfolgreich geladen');
-        if (function_exists('getDB')) {
+
+        // Prüfe ob DB-Credentials gesetzt sind
+        $hasDbCredentials = defined('DB_NAME') && defined('DB_USER') && !empty(DB_NAME) && !empty(DB_USER);
+        writeLog('DB-Credentials gesetzt: ' . ($hasDbCredentials ? 'Ja' : 'Nein'));
+
+        if ($hasDbCredentials && function_exists('getDB')) {
             writeLog('getDB() Funktion verfügbar - teste Datenbankverbindung...');
             try {
                 $db = getDB();
-                writeLog('Datenbankverbindung erfolgreich');
-                // Prüfe ob Tabellen existieren
-                $stmt = $db->query("SHOW TABLES LIKE 'users'");
-                $installed = $stmt->rowCount() > 0;
-                writeLog('Tabelle "users" existiert: ' . ($installed ? 'Ja' : 'Nein'));
+                if ($db !== null) {
+                    writeLog('Datenbankverbindung erfolgreich');
+                    // Prüfe ob Tabellen existieren
+                    $stmt = $db->query("SHOW TABLES LIKE 'users'");
+                    $installed = $stmt->rowCount() > 0;
+                    writeLog('Tabelle "users" existiert: ' . ($installed ? 'Ja' : 'Nein'));
+                } else {
+                    writeLog('getDB() gab null zurück - keine DB-Verbindung möglich');
+                    $installed = false;
+                }
             } catch (PDOException $e) {
                 writeErrorLog('PDO Fehler bei Datenbankverbindung', $e);
                 $installed = false;
             }
         } else {
-            writeLog('WARNUNG: getDB() Funktion nicht verfügbar nach require config.php');
+            writeLog('DB-Credentials fehlen oder getDB() nicht verfügbar - Installation nötig');
+            $installed = false;
         }
     } catch (Exception $e) {
         writeErrorLog('Fehler beim Laden von config.php', $e);
@@ -196,7 +223,7 @@ $needsDownload = !$installed && (
 );
 
 // Auto-Download beim ersten Aufruf (wenn Dateien fehlen)
-if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['skip_download'])) {
+if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['skip_download']) && !isset($_GET['download'])) {
     // Prüfe PHP-Extensions
     if (!class_exists('ZipArchive')) {
         $error = 'ZipArchive ist nicht verfügbar. Bitte installiere die PHP Zip-Extension auf deinem Server.';
@@ -426,10 +453,19 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                     writeLog('═══════════════════════════════════════════════════════');
                     writeLog('Download erfolgreich abgeschlossen!');
                     writeLog('═══════════════════════════════════════════════════════');
-                    $success = 'Alle Dateien wurden erfolgreich von GitHub heruntergeladen. Du kannst jetzt mit der Installation fortfahren.';
                     
-                    // Aktualisiere needsDownload
+                    // Aktualisiere needsDownload und setze Success
                     $needsDownload = false;
+                    $success = 'Alle Dateien wurden erfolgreich von GitHub heruntergeladen. Du kannst jetzt mit der Installation fortfahren.';
+
+                    writeLog('Download-Modus beendet - Redirect zur NEUEN install.php');
+                    writeLog('═══════════════════════════════════════════════════════');
+
+                    // WICHTIG: Redirect zur frisch heruntergeladenen install.php
+                    // Dies verhindert dass die alte install.php weiter ausgeführt wird
+                    ob_end_clean(); // Output-Buffer leeren
+                    header('Location: install.php?step=install&downloaded=1');
+                    exit;
                     
                 } else {
                     writeErrorLog('Konnte extrahierten Ordner nicht finden');
@@ -467,9 +503,14 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
     } // Ende der else-Klammer für Extensions-Prüfung
 }
 
-// POST-Handler
-writeLog('Prüfe Request-Methode: ' . $_SERVER['REQUEST_METHOD']);
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // POST-Handler
+    writeLog('Prüfe Request-Methode: ' . $_SERVER['REQUEST_METHOD']);
+    writeLog('needsDownload Status: ' . ($needsDownload ? 'true' : 'false'));
+    writeLog('installed Status: ' . ($installed ? 'true' : 'false'));
+    writeLog('step: ' . $step);
+    writeLog('downloaded Parameter: ' . (isset($_GET['downloaded']) ? $_GET['downloaded'] : 'nicht gesetzt'));
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     writeLog('POST-Request erkannt');
     writeLog('POST-Daten: ' . json_encode(array_keys($_POST)));
     
@@ -706,7 +747,12 @@ PHP;
                 
                 $success = 'Installation erfolgreich!';
                 $installed = true;
-                $step = 'update';
+                $step = 'complete';
+
+                writeLog('═══════════════════════════════════════════════════════');
+                writeLog('Installation erfolgreich abgeschlossen!');
+                writeLog('Weiterleitung zu index.php...');
+                writeLog('═══════════════════════════════════════════════════════');
                 
             } catch (Exception $e) {
                 writeErrorLog('Fehler bei Installation', $e);
@@ -988,6 +1034,10 @@ PHP;
     }
 }
 
+// Logging vor HTML-Output
+writeLog('Starte HTML-Rendering...');
+writeLog('Variablen vor HTML: error=' . ($error ? 'gesetzt' : 'leer') . ', success=' . ($success ? 'gesetzt' : 'leer'));
+
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -1239,7 +1289,9 @@ PHP;
                 <h1>Stammtisch App Installation</h1>
             </div>
             
-            <?php if ($error): ?>
+            <?php
+            writeLog('HTML-Block: Error-Anzeige (error=' . ($error ? 'ja' : 'nein') . ')');
+            if ($error): ?>
                 <div class="alert alert-error" style="background: #ff4444; color: #ffffff; padding: 30px; border-radius: 12px; margin: 30px 0; font-size: 18px; line-height: 1.8; box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4); border: 3px solid #ff0000; animation: pulse-error 2s infinite;">
                     <strong style="font-size: 24px; display: block; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">❌ KRITISCHER FEHLER:</strong>
                     <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 8px; font-family: 'Monaco', 'Menlo', 'Consolas', monospace; white-space: pre-wrap; word-wrap: break-word; font-size: 16px; border: 1px solid rgba(255,255,255,0.2);"><?= htmlspecialchars($error) ?></div>
@@ -1252,11 +1304,17 @@ PHP;
                 </style>
             <?php endif; ?>
             
-            <?php if ($success): ?>
+            <?php
+            writeLog('HTML-Block: Success-Anzeige (success=' . ($success ? 'ja' : 'nein') . ')');
+            if ($success): ?>
                 <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
             <?php endif; ?>
-            
-            <?php if ($needsDownload && !isset($_POST['skip_download']) && empty($error)): ?>
+
+            <?php
+            writeLog('HTML-Block: Prüfe needsDownload Block (needsDownload=' . ($needsDownload ? 'true' : 'false') . ')');
+            if ($needsDownload && !isset($_POST['skip_download']) && empty($error)):
+                writeLog('HTML-Block: needsDownload Block wird angezeigt');
+            ?>
                 <div class="alert alert-info" style="margin-bottom: 25px; padding: 25px; background: #007AFF; color: #ffffff; border-radius: 12px;">
                     <strong style="font-size: 20px; display: block; margin-bottom: 15px;">📦 Dateien werden von GitHub heruntergeladen...</strong>
                     <p style="font-size: 16px; line-height: 1.6;">Die Installation lädt automatisch alle benötigten Dateien herunter.</p>
@@ -1275,19 +1333,35 @@ PHP;
                                 🔄 Erneut versuchen
                             </a>
                         </div>
-                    <?php else: ?>
-                        <div style="margin-top: 30px;">
-                            <form method="POST">
-                                <input type="hidden" name="skip_download" value="1">
-                                <button type="submit" class="btn-install">
-                                    ✅ Weiter zur Installation
-                                </button>
-                            </form>
+                    <?php elseif (empty($error) && !$needsDownload && !empty($success)): ?>
+                        <div style="margin-top: 30px; padding: 20px; background: #1a1a1a; border-radius: 12px; border: 2px solid #00c853;">
+                            <p style="color: #00c853; font-size: 18px; margin-bottom: 20px; text-align: center;">
+                                ✅ <strong>Download erfolgreich abgeschlossen!</strong>
+                            </p>
+                            <p style="color: #cccccc; text-align: center; margin-bottom: 20px;">
+                                Die Seite wird jetzt automatisch neu geladen, um mit der Installation fortzufahren...
+                            </p>
+                            <script>
+                                // Nur einmal reloaden - verhindere Loop
+                                if (!sessionStorage.getItem('install_download_complete')) {
+                                    sessionStorage.setItem('install_download_complete', 'true');
+                                    setTimeout(function() {
+                                        window.location.href = 'install.php?step=install';
+                                    }, 2000);
+                                }
+                            </script>
+                            <a href="install.php?step=install" class="btn-install" style="text-decoration: none; display: block; text-align: center; margin-top: 20px;">
+                                → Jetzt zur Installation
+                            </a>
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
-                
-            <?php elseif (!$installed && $step === 'install'): ?>
+
+            <?php
+            writeLog('HTML-Block: Prüfe Installationsformular Block');
+            elseif (!$installed && $step === 'install' && !$needsDownload):
+                writeLog('HTML-Block: Installationsformular wird angezeigt');
+            ?>
                 <form method="POST">
                     <h2>Datenbank-Konfiguration</h2>
                     
@@ -1332,8 +1406,54 @@ PHP;
                     
                     <button type="submit" class="btn-install">🚀 Installation starten</button>
                 </form>
-                
-            <?php elseif ($installed && $step === 'update'): ?>
+
+            <?php
+            writeLog('HTML-Block: Prüfe Complete Block (step=' . $step . ')');
+            elseif ($step === 'complete'):
+                writeLog('HTML-Block: Complete wird angezeigt');
+            ?>
+                <div class="alert alert-success" style="font-size: 20px; padding: 30px; text-align: center;">
+                    🎉 <strong>Installation erfolgreich abgeschlossen!</strong>
+                </div>
+
+                <div style="margin-top: 30px; padding: 25px; background: #1a1a1a; border-radius: 12px; border: 2px solid #00c853; text-align: center;">
+                    <p style="color: #ffffff; font-size: 18px; margin-bottom: 20px;">
+                        Die Stammtisch App wurde erfolgreich installiert!
+                    </p>
+                    <p style="color: #cccccc; margin-bottom: 30px;">
+                        Du wirst jetzt automatisch zur Login-Seite weitergeleitet...
+                    </p>
+                    <script>
+                        setTimeout(function() {
+                            window.location.href = 'index.php';
+                        }, 2000);
+                    </script>
+                    <a href="index.php" class="btn-install" style="text-decoration: none; display: block; text-align: center;">
+                        → Jetzt zur Login-Seite
+                    </a>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>✅ Was wurde installiert?</strong></p>
+                    <ul style="color: #cccccc; line-height: 1.8; margin-left: 20px;">
+                        <li>✅ Datenbank erstellt und initialisiert</li>
+                        <li>✅ Admin-Account angelegt</li>
+                        <li>✅ Alle Tabellen eingerichtet</li>
+                        <li>✅ Upload-Ordner erstellt</li>
+                    </ul>
+                    <p style="margin-top: 20px;"><strong>📝 Nächste Schritte:</strong></p>
+                    <ul style="color: #cccccc; line-height: 1.8; margin-left: 20px;">
+                        <li>Melde dich mit deinen Admin-Zugangsdaten an</li>
+                        <li>Lege weitere Benutzer an</li>
+                        <li>Erstelle deinen ersten Termin</li>
+                    </ul>
+                </div>
+
+            <?php
+            writeLog('HTML-Block: Prüfe Update Block (installed=' . ($installed ? 'true' : 'false') . ', step=' . $step . ')');
+            elseif ($installed && $step === 'update'):
+                writeLog('HTML-Block: Update wird angezeigt');
+            ?>
                 <div class="alert alert-success">
                     ✅ <strong>App ist bereits installiert!</strong>
                 </div>
@@ -1388,8 +1508,15 @@ PHP;
                 <h3 style="color: #ffffff; margin-bottom: 15px; font-size: 18px;">📋 Update-Log:</h3>
                 <pre><?= htmlspecialchars(implode("\n", $output)) ?></pre>
             </div>
-        <?php endif; ?>
+        <?php
+        writeLog('HTML-Block: Ende erreicht');
+        endif; ?>
     </div>
+    <?php writeLog('HTML-Rendering erfolgreich abgeschlossen'); ?>
 </body>
 </html>
+<?php
+// Output-Buffer leeren und ausgeben
+ob_end_flush();
+?>
 

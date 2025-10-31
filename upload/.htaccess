@@ -1,0 +1,40 @@
+# .htaccess für Stammtisch App Root-Verzeichnis
+
+# PHP-Einstellungen optimieren
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value max_input_time 300
+php_value memory_limit 256M
+
+# Error Reporting aktivieren (für Installation)
+php_flag display_errors on
+php_flag log_errors on
+php_value error_reporting 32767
+
+# Zeichenkodierung
+AddDefaultCharset UTF-8
+
+# Verzeichnis-Listing deaktivieren
+Options -Indexes
+
+# DirectoryIndex
+DirectoryIndex index.php index.html
+
+# Sicherheit: Verstecke sensible Dateien
+<FilesMatch "^(config\.php|config\.local\.php|\.git.*|\.env|composer\.json|composer\.lock|package\.json)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Erlaube Zugriff auf install.php (für Installation)
+<Files "install.php">
+    Order allow,deny
+    Allow from all
+</Files>
+
+# Rewrite-Engine (falls mod_rewrite verfügbar)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+</IfModule>
