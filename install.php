@@ -804,7 +804,38 @@ function deleteDirectory($dir) {
                 <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
             <?php endif; ?>
             
-            <?php if (!$installed && $step === 'install'): ?>
+            <?php if ($needsDownload && !isset($_POST['skip_download']) && empty($error)): ?>
+                <div class="alert alert-info" style="margin-bottom: 25px; padding: 25px; background: #007AFF; color: #ffffff; border-radius: 12px;">
+                    <strong style="font-size: 20px; display: block; margin-bottom: 15px;">📦 Dateien werden von GitHub heruntergeladen...</strong>
+                    <p style="font-size: 16px; line-height: 1.6;">Die Installation lädt automatisch alle benötigten Dateien herunter.</p>
+                    <p style="font-size: 14px; margin-top: 15px; opacity: 0.9;">Dies kann einige Sekunden dauern...</p>
+                </div>
+                
+                <?php if (!empty($output)): ?>
+                    <div class="update-log" style="margin-top: 25px; padding: 30px; background: #0a0a0a; border-radius: 12px; border: 3px solid #007AFF; max-height: 600px; overflow-y: auto;">
+                        <strong style="color: #007AFF; display: block; margin-bottom: 20px; font-size: 20px; font-weight: 700;">📋 Download-Log:</strong>
+                        <pre style="color: #cccccc; font-size: 14px; line-height: 2; margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Monaco', 'Menlo', 'Consolas', monospace;"><?= htmlspecialchars(implode("\n", $output)) ?></pre>
+                    </div>
+                    
+                    <?php if (!empty($error)): ?>
+                        <div style="margin-top: 20px;">
+                            <a href="?step=install" class="btn-install" style="text-decoration: none; display: block; text-align: center;">
+                                🔄 Erneut versuchen
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <div style="margin-top: 30px;">
+                            <form method="POST">
+                                <input type="hidden" name="skip_download" value="1">
+                                <button type="submit" class="btn-install">
+                                    ✅ Weiter zur Installation
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+                
+            <?php elseif (!$installed && $step === 'install'): ?>
                 <form method="POST">
                     <h2>Datenbank-Konfiguration</h2>
                     
