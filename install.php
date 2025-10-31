@@ -1,6 +1,16 @@
 <?php
 // Installationsseite für Stammtisch App
 
+// Fehleranzeige aktivieren für Debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+
+// Maximale Ausführungszeit erhöhen für ZIP-Download
+set_time_limit(300); // 5 Minuten
+ini_set('max_execution_time', 300);
+ini_set('memory_limit', '256M');
+
 // Prüfe ob bereits installiert
 $configFile = __DIR__ . '/config.php';
 $installed = false;
@@ -33,16 +43,34 @@ $needsDownload = !$installed && (
 
 // Auto-Download beim ersten Aufruf (wenn Dateien fehlen)
 if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['skip_download'])) {
+    // Prüfe PHP-Extensions
+    if (!class_exists('ZipArchive')) {
+        $error = 'ZipArchive ist nicht verfügbar. Bitte installiere die PHP Zip-Extension auf deinem Server.';
+        $needsDownload = false;
+    } elseif (!function_exists('curl_init') && !ini_get('allow_url_fopen')) {
+        $error = 'Weder cURL noch allow_url_fopen sind verfügbar. Bitte kontaktiere deinen Hoster, um eine dieser Optionen zu aktivieren.';
+        $needsDownload = false;
+    } else {
     $output = [];
     $output[] = '═══════════════════════════════════════════════════════';
     $output[] = '📦 DOWNLOAD MODUS';
     $output[] = '═══════════════════════════════════════════════════════';
     $output[] = '';
     $output[] = 'Lade alle Dateien von GitHub herunter...';
+    $output[] = '';
+    $output[] = 'PHP-Version: ' . PHP_VERSION;
+    $output[] = 'ZipArchive: ' . (class_exists('ZipArchive') ? '✅ Verfügbar' : '❌ Nicht verfügbar');
+    $output[] = 'cURL: ' . (function_exists('curl_init') ? '✅ Verfügbar' : '❌ Nicht verfügbar');
+    $output[] = 'allow_url_fopen: ' . (ini_get('allow_url_fopen') ? '✅ Aktiviert' : '❌ Deaktiviert');
+    $output[] = 'Memory Limit: ' . ini_get('memory_limit');
+    $output[] = 'Max Execution Time: ' . ini_get('max_execution_time') . ' Sekunden';
+    $output[] = '';
     
     // Prüfe ob ZipArchive verfügbar ist
     if (!class_exists('ZipArchive')) {
-        $error = 'ZipArchive ist nicht verfügbar. Bitte kontaktiere deinen Hoster.';
+        $error = 'ZipArchive ist nicht verfügbar. Bitte installiere die PHP Zip-Extension auf deinem Server.';
+    } elseif (!function_exists('curl_init') && !ini_get('allow_url_fopen')) {
+        $error = 'Weder cURL noch allow_url_fopen sind verfügbar. Bitte kontaktiere deinen Hoster, um eine dieser Optionen zu aktivieren.';
     } else {
         try {
             $gitDir = __DIR__;
@@ -214,11 +242,26 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
             }
             
         } catch (Exception $e) {
-            if (isset($zipFile) && file_exists($zipFile)) unlink($zipFile);
-            if (isset($extractDir) && is_dir($extractDir)) deleteDirectory($extractDir);
+            if (isset($zipFile) && file_exists($zipFile)) @unlink($zipFile);
+            if (isset($extractDir) && is_dir($extractDir)) {
+                if (function_exists('deleteDirectory')) {
+                    deleteDirectory($extractDir);
+                }
+            }
             $error = 'Fehler beim Download: ' . $e->getMessage();
+            $output[] = '';
+            $output[] = '❌ FEHLER: ' . $e->getMessage();
+            $output[] = 'Stack Trace: ' . $e->getTraceAsString();
+        } catch (Error $e) {
+            // PHP 7+ Fatal Errors abfangen
+            $error = 'PHP Fehler: ' . $e->getMessage() . ' in Zeile ' . $e->getLine();
+            $output[] = '';
+            $output[] = '❌ PHP FEHLER: ' . $e->getMessage();
+            $output[] = 'Datei: ' . $e->getFile();
+            $output[] = 'Zeile: ' . $e->getLine();
         }
     }
+    } // Ende der else-Klammer für Extensions-Prüfung
 }
 
 // POST-Handler
@@ -723,15 +766,25 @@ PHP;
 }
 
 // Hilfsfunktion zum Löschen von Verzeichnissen
-function deleteDirectory($dir) {
-    if (!is_dir($dir)) return;
-    
-    $files = array_diff(scandir($dir), array('.', '..'));
-    foreach ($files as $file) {
-        $path = $dir . '/' . $file;
-        is_dir($path) ? deleteDirectory($path) : unlink($path);
+if (!function_exists('deleteDirectory')) {
+    function deleteDirectory($dir) {
+        if (!is_dir($dir)) return;
+        
+        try {
+            $files = array_diff(scandir($dir), array('.', '..'));
+            foreach ($files as $file) {
+                $path = $dir . '/' . $file;
+                if (is_dir($path)) {
+                    deleteDirectory($path);
+                } else {
+                    @unlink($path);
+                }
+            }
+            @rmdir($dir);
+        } catch (Exception $e) {
+            // Fehler beim Löschen ignorieren
+        }
     }
-    rmdir($dir);
 }
 
 ?>
