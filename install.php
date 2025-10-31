@@ -165,53 +165,163 @@ PHP;
             }
         }
     } elseif ($step === 'update') {
-        // Git Update durchführen
+        // Update durchführen (via Git oder ZIP-Download)
         $output = [];
         $returnCode = 0;
         $gitDir = __DIR__;
         
-        // Prüfe ob Git-Repository vorhanden
-        if (!is_dir($gitDir . '/.git')) {
-            // Versuche automatisch zu klonen
-            $cloneOutput = [];
-            $cloneReturnCode = 0;
-            
-            // Prüfe ob Git installiert ist
-            exec('which git 2>&1', $gitCheck, $gitCheckCode);
-            if ($gitCheckCode !== 0) {
-                $error = 'Git ist nicht installiert. Bitte installiere Git auf dem Server oder klone das Repository manuell via SSH.';
-            } else {
-                // Versuche zu klonen
-                exec("cd " . escapeshellarg($gitDir) . " && git clone https://github.com/TrofyTT/Stammtisch.git . 2>&1", $cloneOutput, $cloneReturnCode);
-                
-                if ($cloneReturnCode === 0 || is_dir($gitDir . '/.git')) {
-                    // Repository erfolgreich geklont oder bereits vorhanden
-                    $output = array_merge(['=== Repository geklont ==='], $cloneOutput);
-                    
-                    // Jetzt Pull durchführen
-                    exec("cd " . escapeshellarg($gitDir) . " && git pull origin main 2>&1", $pullOutput, $pullReturnCode);
-                    $output = array_merge($output, ['=== Pull durchgeführt ==='], $pullOutput);
-                    
-                    if ($pullReturnCode === 0) {
-                        $success = 'Repository erfolgreich geklont und aktualisiert!';
-                    } else {
-                        $error = 'Klon erfolgreich, aber Pull fehlgeschlagen: ' . implode("\n", $pullOutput);
-                    }
-                } else {
-                    $error = 'Repository konnte nicht geklont werden. Bitte manuell via SSH klonen: <br><code>cd ' . htmlspecialchars($gitDir) . ' && git clone https://github.com/TrofyTT/Stammtisch.git .</code><br><br>Fehler: ' . implode("\n", $cloneOutput);
-                }
-            }
-        } else {
-            // Git Pull
+        // Methode 1: Versuche Git (falls verfügbar)
+        exec('which git 2>&1', $gitCheck, $gitCheckCode);
+        $gitAvailable = ($gitCheckCode === 0);
+        
+        if ($gitAvailable && is_dir($gitDir . '/.git')) {
+            // Git-Repository vorhanden - versuche Pull
             exec("cd " . escapeshellarg($gitDir) . " && git pull origin main 2>&1", $output, $returnCode);
             
             if ($returnCode === 0) {
-                $success = 'Update erfolgreich!';
+                $success = 'Update erfolgreich via Git!';
             } else {
-                $error = 'Update fehlgeschlagen: ' . implode("\n", $output);
+                // Git Pull fehlgeschlagen - versuche ZIP-Methode
+                $output[] = '=== Git Pull fehlgeschlagen, versuche ZIP-Download ===';
+                $gitAvailable = false;
+            }
+        }
+        
+        // Methode 2: ZIP-Download (falls Git nicht verfügbar oder fehlgeschlagen)
+        if (!$gitAvailable || !is_dir($gitDir . '/.git')) {
+            $output[] = '=== Lade Update via ZIP-Download ===';
+            
+            // Prüfe ob ZipArchive verfügbar ist
+            if (!class_exists('ZipArchive')) {
+                $error = 'Weder Git noch ZipArchive ist verfügbar. Bitte kontaktiere deinen Hoster oder installiere Git/ZipArchive.';
+            } else {
+                // Lade ZIP von GitHub
+                $zipUrl = 'https://github.com/TrofyTT/Stammtisch/archive/refs/heads/main.zip';
+                $zipFile = $gitDir . '/update_temp.zip';
+                $extractDir = $gitDir . '/update_temp';
+                
+                try {
+                    // Lade ZIP herunter
+                    $output[] = 'Lade ZIP von GitHub...';
+                    $zipData = @file_get_contents($zipUrl);
+                    
+                    if ($zipData === false) {
+                        throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Bitte prüfe die Internetverbindung.');
+                    }
+                    
+                    // Speichere ZIP
+                    file_put_contents($zipFile, $zipData);
+                    $output[] = 'ZIP heruntergeladen (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
+                    
+                    // Erstelle temporären Extraktions-Ordner
+                    if (!is_dir($extractDir)) {
+                        mkdir($extractDir, 0755, true);
+                    }
+                    
+                    // Entpacke ZIP
+                    $zip = new ZipArchive();
+                    if ($zip->open($zipFile) === TRUE) {
+                        $zip->extractTo($extractDir);
+                        $zip->close();
+                        $output[] = 'ZIP entpackt';
+                        
+                        // Finde den extrahierten Ordner (normalerweise Stammtisch-main)
+                        $extractedFolder = null;
+                        $dirs = scandir($extractDir);
+                        foreach ($dirs as $dir) {
+                            if ($dir !== '.' && $dir !== '..' && is_dir($extractDir . '/' . $dir)) {
+                                $extractedFolder = $extractDir . '/' . $dir;
+                                break;
+                            }
+                        }
+                        
+                        if ($extractedFolder) {
+                            $output[] = 'Kopiere Dateien...';
+                            
+                            // Dateien kopieren (außer config.php und uploads/)
+                            $excludeFiles = ['config.php', 'config.local.php', '.git', 'uploads'];
+                            $excludeDirs = ['uploads'];
+                            
+                            $filesCopied = 0;
+                            $iterator = new RecursiveIteratorIterator(
+                                new RecursiveDirectoryIterator($extractedFolder, RecursiveDirectoryIterator::SKIP_DOTS),
+                                RecursiveIteratorIterator::SELF_FIRST
+                            );
+                            
+                            foreach ($iterator as $item) {
+                                $relativePath = substr($item->getPathname(), strlen($extractedFolder) + 1);
+                                $targetPath = $gitDir . '/' . $relativePath;
+                                
+                                // Überspringe ausgeschlossene Dateien/Ordner
+                                $skip = false;
+                                foreach ($excludeFiles as $exclude) {
+                                    if (strpos($relativePath, $exclude) === 0) {
+                                        $skip = true;
+                                        break;
+                                    }
+                                }
+                                foreach ($excludeDirs as $excludeDir) {
+                                    if (strpos($relativePath, $excludeDir . '/') === 0 || $relativePath === $excludeDir) {
+                                        $skip = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (!$skip) {
+                                    if ($item->isDir()) {
+                                        if (!is_dir($targetPath)) {
+                                            mkdir($targetPath, 0755, true);
+                                        }
+                                    } else {
+                                        // Erstelle Zielverzeichnis falls nötig
+                                        $targetDir = dirname($targetPath);
+                                        if (!is_dir($targetDir)) {
+                                            mkdir($targetDir, 0755, true);
+                                        }
+                                        
+                                        copy($item->getPathname(), $targetPath);
+                                        $filesCopied++;
+                                    }
+                                }
+                            }
+                            
+                            $output[] = $filesCopied . ' Dateien aktualisiert';
+                            
+                            // Aufräumen
+                            unlink($zipFile);
+                            $this->deleteDirectory($extractDir);
+                            
+                            $success = 'Update erfolgreich via ZIP-Download! ' . $filesCopied . ' Dateien aktualisiert.';
+                        } else {
+                            throw new Exception('Konnte extrahierten Ordner nicht finden.');
+                        }
+                    } else {
+                        throw new Exception('Konnte ZIP nicht entpacken.');
+                    }
+                    
+                } catch (Exception $e) {
+                    // Aufräumen bei Fehler
+                    if (file_exists($zipFile)) unlink($zipFile);
+                    if (is_dir($extractDir)) $this->deleteDirectory($extractDir);
+                    
+                    $error = 'Fehler beim ZIP-Download: ' . $e->getMessage();
+                }
             }
         }
     }
+}
+
+// Hilfsfunktion zum Löschen von Verzeichnissen
+function deleteDirectory($dir) {
+    if (!is_dir($dir)) return;
+    
+    $files = array_diff(scandir($dir), array('.', '..'));
+    foreach ($files as $file) {
+        $path = $dir . '/' . $file;
+        is_dir($path) ? deleteDirectory($path) : unlink($path);
+    }
+    rmdir($dir);
+}
 }
 
 ?>
@@ -527,12 +637,15 @@ PHP;
                 <h2>🔄 Update von Git</h2>
                 <p>Lade die neuesten Änderungen vom GitHub-Repository herunter.</p>
                 
-                <?php if (!is_dir(__DIR__ . '/.git')): ?>
-                    <div class="alert alert-info" style="margin-bottom: 25px;">
-                        <strong>📦 Git-Repository wird automatisch geklont</strong><br>
-                        Falls das Repository noch nicht vorhanden ist, wird es beim Update automatisch von GitHub geklont.
-                    </div>
-                <?php endif; ?>
+                <div class="alert alert-info" style="margin-bottom: 25px;">
+                    <strong>📦 Automatischer Update</strong><br>
+                    Das Update wird automatisch von GitHub geladen. Es wird versucht:
+                    <ul style="margin: 10px 0 0 20px; color: #cccccc;">
+                        <li>✅ Git (falls verfügbar)</li>
+                        <li>✅ ZIP-Download (falls Git nicht verfügbar)</li>
+                    </ul>
+                    <strong>Kein SSH-Zugriff nötig!</strong>
+                </div>
                 
                 <form method="POST">
                     <button type="submit" class="btn-install">🔄 Update von GitHub laden</button>
