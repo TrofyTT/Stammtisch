@@ -195,8 +195,14 @@ PHP;
             if (!class_exists('ZipArchive')) {
                 $error = 'Weder Git noch ZipArchive ist verfügbar. Bitte kontaktiere deinen Hoster oder installiere Git/ZipArchive.';
             } else {
-                // Lade ZIP von GitHub
-                $zipUrl = 'https://github.com/TrofyTT/Stammtisch/archive/refs/heads/main.zip';
+                // Lade ZIP von GitHub (verschiedene URL-Formate versuchen)
+                $zipUrls = [
+                    'https://github.com/TrofyTT/Stammtisch/archive/refs/heads/main.zip',
+                    'https://github.com/TrofyTT/Stammtisch/archive/main.zip',
+                    'https://codeload.github.com/TrofyTT/Stammtisch/zip/refs/heads/main'
+                ];
+                $zipUrl = null;
+                $zipData = false;
                 $zipFile = $gitDir . '/update_temp.zip';
                 $extractDir = $gitDir . '/update_temp';
                 
