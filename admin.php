@@ -55,11 +55,10 @@ $user = getCurrentUser();
         <div class="admin-section">
             <h2>🔄 Updates</h2>
             <div class="update-section">
-                <p>Lade die neuesten Änderungen vom Git-Repository herunter.</p>
-                <div id="gitUpdateStatus" class="update-status"></div>
-                <button class="btn btn-primary" id="gitPullBtn">
-                    <span>🔄 Update von Git laden</span>
-                </button>
+                <p>Lade die neueste Version von GitHub herunter und aktualisiere die Anwendung.</p>
+                <a href="update.php" class="btn btn-primary">
+                    🚀 Update-System öffnen
+                </a>
             </div>
         </div>
         

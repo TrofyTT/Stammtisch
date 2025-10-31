@@ -1,12 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Git Pull Button
-    const gitPullBtn = document.getElementById('gitPullBtn');
-    if (gitPullBtn) {
-        gitPullBtn.addEventListener('click', handleGitPull);
-    }
     loadUsers();
     loadSettings();
-    
+
     document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
 });
 
@@ -207,74 +202,6 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-function handleGitPull() {
-    const btn = document.getElementById('gitPullBtn');
-    const statusDiv = document.getElementById('gitUpdateStatus');
-    
-    if (!btn || !statusDiv) return;
-    
-    // Bestätigung
-    if (!confirm('Möchtest du wirklich ein Update von Git durchführen?\n\nDies lädt alle Änderungen vom Repository herunter.')) {
-        return;
-    }
-    
-    // Button deaktivieren
-    btn.disabled = true;
-    btn.innerHTML = '<span>⏳ Lade Update...</span>';
-    statusDiv.innerHTML = '<div class="alert alert-info">Update wird durchgeführt...</div>';
-    
-    fetch('api.php?action=git_pull', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        btn.disabled = false;
-        btn.innerHTML = '<span>🔄 Update von Git laden</span>';
-        
-        if (data.success) {
-            let statusHTML = '<div class="alert alert-success">✅ Update erfolgreich!</div>';
-            
-            if (data.output) {
-                statusHTML += '<div class="update-output"><pre>' + escapeHtml(data.output) + '</pre></div>';
-            }
-            
-            if (data.status) {
-                statusHTML += '<div class="update-status-info"><strong>Git Status:</strong><pre>' + escapeHtml(data.status) + '</pre></div>';
-            }
-            
-            statusDiv.innerHTML = statusHTML;
-            
-            // Optional: Seite neu laden nach 2 Sekunden
-            setTimeout(() => {
-                if (confirm('Update erfolgreich! Seite neu laden?')) {
-                    window.location.reload();
-                }
-            }, 2000);
-        } else {
-            let errorHTML = '<div class="alert alert-danger">❌ Update fehlgeschlagen!</div>';
-            
-            if (data.output) {
-                errorHTML += '<div class="update-output"><strong>Fehler:</strong><pre>' + escapeHtml(data.output) + '</pre></div>';
-            }
-            
-            if (data.status) {
-                errorHTML += '<div class="update-status-info"><strong>Git Status:</strong><pre>' + escapeHtml(data.status) + '</pre></div>';
-            }
-            
-            statusDiv.innerHTML = errorHTML;
-        }
-    })
-    .catch(err => {
-        console.error('Fehler:', err);
-        btn.disabled = false;
-        btn.innerHTML = '<span>🔄 Update von Git laden</span>';
-        statusDiv.innerHTML = '<div class="alert alert-danger">Fehler beim Update: ' + escapeHtml(err.message) + '</div>';
-    });
 }
 
 window.toggleAdmin = toggleAdmin;

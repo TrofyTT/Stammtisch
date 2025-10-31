@@ -496,38 +496,7 @@ try {
             }
             echo json_encode(['success' => true, 'settings' => $settings]);
             break;
-            
-        case 'git_pull':
-            // Git Pull ausführen (nur für Admins)
-            if (!$_SESSION['is_admin']) {
-                throw new Exception('Keine Berechtigung.');
-            }
-            
-            $output = [];
-            $returnCode = 0;
-            
-            // Sicherstellen, dass wir im richtigen Verzeichnis sind
-            $gitDir = __DIR__;
-            
-            // Git Pull ausführen
-            $command = "cd " . escapeshellarg($gitDir) . " && git pull 2>&1";
-            exec($command, $output, $returnCode);
-            
-            $result = [
-                'success' => $returnCode === 0,
-                'output' => implode("\n", $output),
-                'return_code' => $returnCode,
-                'command' => $command
-            ];
-            
-            // Git Status prüfen für zusätzliche Infos
-            $statusOutput = [];
-            exec("cd " . escapeshellarg($gitDir) . " && git status 2>&1", $statusOutput);
-            $result['status'] = implode("\n", $statusOutput);
-            
-            echo json_encode($result, JSON_UNESCAPED_UNICODE);
-            break;
-            
+
         case 'save_settings':
             if (!$_SESSION['is_admin']) {
                 throw new Exception('Keine Berechtigung.');
