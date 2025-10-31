@@ -642,7 +642,10 @@ function deleteDirectory($dir) {
             </div>
             
             <?php if ($error): ?>
-                <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
+                <div class="alert alert-error">
+                    <strong>❌ Fehler:</strong><br>
+                    <?= nl2br(htmlspecialchars($error)) ?>
+                </div>
             <?php endif; ?>
             
             <?php if ($success): ?>
@@ -733,8 +736,8 @@ function deleteDirectory($dir) {
         
         <?php if ($step === 'update' && isset($output) && !empty($output)): ?>
             <div class="install-step">
-                <h3>Git-Output:</h3>
-                <pre style="background: var(--bg-primary); padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;"><?= htmlspecialchars(implode("\n", $output)) ?></pre>
+                <h3 style="color: #ffffff; margin-bottom: 15px; font-size: 18px;">📋 Update-Log:</h3>
+                <pre><?= htmlspecialchars(implode("\n", $output)) ?></pre>
             </div>
         <?php endif; ?>
     </div>
