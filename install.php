@@ -289,7 +289,7 @@ PHP;
                             
                             // Aufräumen
                             unlink($zipFile);
-                            $this->deleteDirectory($extractDir);
+                            deleteDirectory($extractDir);
                             
                             $success = 'Update erfolgreich via ZIP-Download! ' . $filesCopied . ' Dateien aktualisiert.';
                         } else {
@@ -302,7 +302,7 @@ PHP;
                 } catch (Exception $e) {
                     // Aufräumen bei Fehler
                     if (file_exists($zipFile)) unlink($zipFile);
-                    if (is_dir($extractDir)) $this->deleteDirectory($extractDir);
+                    if (is_dir($extractDir)) deleteDirectory($extractDir);
                     
                     $error = 'Fehler beim ZIP-Download: ' . $e->getMessage();
                 }
@@ -321,7 +321,6 @@ function deleteDirectory($dir) {
         is_dir($path) ? deleteDirectory($path) : unlink($path);
     }
     rmdir($dir);
-}
 }
 
 ?>
