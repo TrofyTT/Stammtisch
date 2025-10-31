@@ -293,7 +293,31 @@ PHP;
                     }
                     
                     if ($zipData === false || strlen($zipData) < 1000) {
-                        throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Alle URL-Varianten wurden versucht.<br><br>Mögliche Lösungen:<br>1. Prüfe ob der Server externe Verbindungen erlaubt<br>2. Kontaktiere deinen Hoster (allow_url_fopen oder cURL benötigt)<br>3. Lade die Dateien manuell per FTP hoch');
+                        // Prüfe ob es ein privates Repository ist (404 Fehler)
+                        $isPrivateRepo = false;
+                        foreach ($zipUrls as $testUrl) {
+                            if (function_exists('curl_init')) {
+                                $ch = curl_init();
+                                curl_setopt($ch, CURLOPT_URL, $testUrl);
+                                curl_setopt($ch, CURLOPT_NOBODY, true);
+                                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                                curl_exec($ch);
+                                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                                curl_close($ch);
+                                
+                                if ($httpCode === 404) {
+                                    $isPrivateRepo = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if ($isPrivateRepo) {
+                            throw new Exception('Das GitHub-Repository ist wahrscheinlich privat. ZIP-Downloads funktionieren nur bei öffentlichen Repositories.<br><br><strong>Lösungen:</strong><br>1. ✅ Repository auf GitHub öffentlich machen (Settings → Danger Zone → Change visibility)<br>2. ✅ Updates per FTP hochladen<br>3. ✅ Update-Button im Admin-Panel nutzen (falls Git verfügbar)<br>4. ✅ SSH-Zugriff nutzen: <code>git pull origin main</code>');
+                        } else {
+                            throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Alle URL-Varianten wurden versucht.<br><br>Mögliche Lösungen:<br>1. Prüfe ob der Server externe Verbindungen erlaubt<br>2. Kontaktiere deinen Hoster (allow_url_fopen oder cURL benötigt)<br>3. Lade die Dateien manuell per FTP hoch');
+                        }
                     }
                     
                     // Speichere ZIP
