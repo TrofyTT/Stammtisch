@@ -172,7 +172,35 @@ PHP;
         
         // Prüfe ob Git-Repository vorhanden
         if (!is_dir($gitDir . '/.git')) {
-            $error = 'Git-Repository nicht gefunden. Bitte erst manuell klonen: git clone https://github.com/TrofyTT/Stammtisch.git .';
+            // Versuche automatisch zu klonen
+            $cloneOutput = [];
+            $cloneReturnCode = 0;
+            
+            // Prüfe ob Git installiert ist
+            exec('which git 2>&1', $gitCheck, $gitCheckCode);
+            if ($gitCheckCode !== 0) {
+                $error = 'Git ist nicht installiert. Bitte installiere Git auf dem Server oder klone das Repository manuell via SSH.';
+            } else {
+                // Versuche zu klonen
+                exec("cd " . escapeshellarg($gitDir) . " && git clone https://github.com/TrofyTT/Stammtisch.git . 2>&1", $cloneOutput, $cloneReturnCode);
+                
+                if ($cloneReturnCode === 0 || is_dir($gitDir . '/.git')) {
+                    // Repository erfolgreich geklont oder bereits vorhanden
+                    $output = array_merge(['=== Repository geklont ==='], $cloneOutput);
+                    
+                    // Jetzt Pull durchführen
+                    exec("cd " . escapeshellarg($gitDir) . " && git pull origin main 2>&1", $pullOutput, $pullReturnCode);
+                    $output = array_merge($output, ['=== Pull durchgeführt ==='], $pullOutput);
+                    
+                    if ($pullReturnCode === 0) {
+                        $success = 'Repository erfolgreich geklont und aktualisiert!';
+                    } else {
+                        $error = 'Klon erfolgreich, aber Pull fehlgeschlagen: ' . implode("\n", $pullOutput);
+                    }
+                } else {
+                    $error = 'Repository konnte nicht geklont werden. Bitte manuell via SSH klonen: <br><code>cd ' . htmlspecialchars($gitDir) . ' && git clone https://github.com/TrofyTT/Stammtisch.git .</code><br><br>Fehler: ' . implode("\n", $cloneOutput);
+                }
+            }
         } else {
             // Git Pull
             exec("cd " . escapeshellarg($gitDir) . " && git pull origin main 2>&1", $output, $returnCode);
@@ -498,6 +526,13 @@ PHP;
                 
                 <h2>🔄 Update von Git</h2>
                 <p>Lade die neuesten Änderungen vom GitHub-Repository herunter.</p>
+                
+                <?php if (!is_dir(__DIR__ . '/.git')): ?>
+                    <div class="alert alert-info" style="margin-bottom: 25px;">
+                        <strong>📦 Git-Repository wird automatisch geklont</strong><br>
+                        Falls das Repository noch nicht vorhanden ist, wird es beim Update automatisch von GitHub geklont.
+                    </div>
+                <?php endif; ?>
                 
                 <form method="POST">
                     <button type="submit" class="btn-install">🔄 Update von GitHub laden</button>
