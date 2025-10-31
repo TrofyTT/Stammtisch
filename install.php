@@ -48,8 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $testDb = new PDO($dsn, $db_user, $db_pass, $options);
                 
                 // Erstelle Datenbank falls nicht vorhanden
-                $testDb->exec("CREATE DATABASE IF NOT EXISTS `$db_name` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-                $testDb->exec("USE `$db_name`");
+                $createDbSql = "CREATE DATABASE IF NOT EXISTS `" . str_replace('`', '``', $db_name) . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
+                $testDb->exec($createDbSql);
+                
+                // Wechsle zur Datenbank
+                $testDb->exec("USE `" . str_replace('`', '``', $db_name) . "`");
                 
                 // Lade SQL-Datei
                 $sqlFile = __DIR__ . '/database_complete.sql';
@@ -58,10 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 $sql = file_get_contents($sqlFile);
-                // Ersetze USE statement
+                // Ersetze USE statement und alle Datenbanknamen
                 // Ersetze Platzhalter in SQL (falls vorhanden)
                 $sql = preg_replace('/USE\s+\[DEINE_DATENBANK\]\s*;/i', "USE `$db_name`;", $sql);
                 $sql = preg_replace('/CREATE\s+DATABASE\s+IF\s+NOT\s+EXISTS\s+\[DEINE_DATENBANK\]/i', "CREATE DATABASE IF NOT EXISTS `$db_name`", $sql);
+                
+                // Ersetze auch alle alten Datenbanknamen, die möglicherweise noch im SQL stehen
+                // (z.B. von früheren Versionen)
+                $sql = preg_replace('/\bkdph7973_pimmel\b/i', $db_name, $sql);
+                $sql = preg_replace('/USE\s+[^;]+;\s*\n/i', "USE `$db_name`;\n", $sql);
                 
                 // Führe SQL aus
                 $testDb->exec($sql);
