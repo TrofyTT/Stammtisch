@@ -31,6 +31,196 @@ $needsDownload = !$installed && (
     !file_exists(__DIR__ . '/assets/css/style.css')
 );
 
+// Auto-Download beim ersten Aufruf (wenn Dateien fehlen)
+if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['skip_download'])) {
+    $output = [];
+    $output[] = '═══════════════════════════════════════════════════════';
+    $output[] = '📦 DOWNLOAD MODUS';
+    $output[] = '═══════════════════════════════════════════════════════';
+    $output[] = '';
+    $output[] = 'Lade alle Dateien von GitHub herunter...';
+    
+    // Prüfe ob ZipArchive verfügbar ist
+    if (!class_exists('ZipArchive')) {
+        $error = 'ZipArchive ist nicht verfügbar. Bitte kontaktiere deinen Hoster.';
+    } else {
+        try {
+            $gitDir = __DIR__;
+            $zipUrls = [
+                'https://github.com/TrofyTT/Stammtisch/archive/main.zip',
+                'https://github.com/TrofyTT/Stammtisch/archive/refs/heads/main.zip',
+                'https://codeload.github.com/TrofyTT/Stammtisch/zip/refs/heads/main',
+                'https://codeload.github.com/TrofyTT/Stammtisch/zip/main'
+            ];
+            $zipFile = $gitDir . '/install_temp.zip';
+            $extractDir = $gitDir . '/install_temp';
+            
+            $output[] = 'Lade ZIP von GitHub...';
+            $zipData = false;
+            
+            // Versuche jede URL
+            foreach ($zipUrls as $urlIndex => $testUrl) {
+                $output[] = "Versuche URL " . ($urlIndex + 1) . "/" . count($zipUrls) . "...";
+                
+                // Methode 1: cURL
+                if (function_exists('curl_init')) {
+                    $ch = curl_init();
+                    curl_setopt($ch, CURLOPT_URL, $testUrl);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
+                    
+                    $zipData = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    
+                    if ($zipData !== false && $httpCode === 200 && substr($zipData, 0, 2) === "PK") {
+                        $output[] = '✅ ZIP erfolgreich heruntergeladen (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
+                        break;
+                    }
+                }
+                
+                // Methode 2: file_get_contents
+                if ($zipData === false && ini_get('allow_url_fopen')) {
+                    $context = stream_context_create([
+                        'http' => [
+                            'method' => 'GET',
+                            'header' => ['User-Agent: Mozilla/5.0'],
+                            'timeout' => 120,
+                            'follow_location' => true
+                        ],
+                        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false]
+                    ]);
+                    
+                    $zipData = @file_get_contents($testUrl, false, $context);
+                    if ($zipData !== false && strlen($zipData) > 1000 && substr($zipData, 0, 2) === "PK") {
+                        $output[] = '✅ ZIP erfolgreich heruntergeladen (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
+                        break;
+                    }
+                }
+            }
+            
+            if ($zipData === false || strlen($zipData) < 1000) {
+                throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Bitte kontaktiere deinen Hoster.');
+            }
+            
+            // Speichere ZIP
+            file_put_contents($zipFile, $zipData);
+            $output[] = 'ZIP gespeichert';
+            
+            // Erstelle temporären Extraktions-Ordner
+            if (!is_dir($extractDir)) {
+                mkdir($extractDir, 0755, true);
+            }
+            
+            // Entpacke ZIP
+            $zip = new ZipArchive();
+            if ($zip->open($zipFile) === TRUE) {
+                $zip->extractTo($extractDir);
+                $zip->close();
+                $output[] = 'ZIP entpackt';
+                
+                // Finde den extrahierten Ordner
+                $extractedFolder = null;
+                $dirs = scandir($extractDir);
+                foreach ($dirs as $dir) {
+                    if ($dir !== '.' && $dir !== '..' && is_dir($extractDir . '/' . $dir)) {
+                        $extractedFolder = $extractDir . '/' . $dir;
+                        break;
+                    }
+                }
+                
+                if ($extractedFolder) {
+                    $output[] = 'Kopiere Dateien...';
+                    
+                    // Dateien kopieren (außer install.php, config.php, config.local.php und uploads/)
+                    $excludeFiles = ['install.php', 'config.php', 'config.local.php', '.git'];
+                    $excludeDirs = ['uploads', '.git'];
+                    
+                    $filesCopied = 0;
+                    $iterator = new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($extractedFolder, RecursiveDirectoryIterator::SKIP_DOTS),
+                        RecursiveIteratorIterator::SELF_FIRST
+                    );
+                    
+                    foreach ($iterator as $item) {
+                        $relativePath = substr($item->getPathname(), strlen($extractedFolder) + 1);
+                        $targetPath = $gitDir . '/' . $relativePath;
+                        
+                        // Überspringe ausgeschlossene Dateien/Ordner
+                        $skip = false;
+                        foreach ($excludeFiles as $exclude) {
+                            if (basename($relativePath) === $exclude || strpos($relativePath, $exclude . '/') === 0) {
+                                $skip = true;
+                                break;
+                            }
+                        }
+                        foreach ($excludeDirs as $excludeDir) {
+                            if (strpos($relativePath, $excludeDir . '/') === 0 || basename($relativePath) === $excludeDir) {
+                                $skip = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$skip) {
+                            if ($item->isDir()) {
+                                if (!is_dir($targetPath)) {
+                                    mkdir($targetPath, 0755, true);
+                                }
+                            } else {
+                                $targetDir = dirname($targetPath);
+                                if (!is_dir($targetDir)) {
+                                    mkdir($targetDir, 0755, true);
+                                }
+                                copy($item->getPathname(), $targetPath);
+                                $filesCopied++;
+                            }
+                        }
+                    }
+                    
+                    $output[] = '✅ ' . $filesCopied . ' Dateien kopiert';
+                    
+                    // Erstelle uploads/avatars/ Ordner
+                    if (!is_dir($gitDir . '/uploads/avatars')) {
+                        mkdir($gitDir . '/uploads/avatars', 0755, true);
+                        $output[] = '✅ uploads/avatars/ Ordner erstellt';
+                    }
+                    
+                    // Erstelle .htaccess für uploads/avatars/
+                    $htaccessContent = "<FilesMatch \"\\.(jpg|jpeg|png|gif|svg|webp)$\">\n    Order Allow,Deny\n    Allow from all\n</FilesMatch>\nphp_flag engine off";
+                    file_put_contents($gitDir . '/uploads/avatars/.htaccess', $htaccessContent);
+                    $output[] = '✅ .htaccess für uploads/avatars/ erstellt';
+                    
+                    // Aufräumen
+                    unlink($zipFile);
+                    deleteDirectory($extractDir);
+                    
+                    $output[] = '';
+                    $output[] = '✅ Alle Dateien erfolgreich heruntergeladen und installiert!';
+                    $success = 'Alle Dateien wurden erfolgreich von GitHub heruntergeladen. Du kannst jetzt mit der Installation fortfahren.';
+                    
+                    // Aktualisiere needsDownload
+                    $needsDownload = false;
+                    
+                } else {
+                    throw new Exception('Konnte extrahierten Ordner nicht finden.');
+                }
+            } else {
+                throw new Exception('Konnte ZIP nicht entpacken.');
+            }
+            
+        } catch (Exception $e) {
+            if (isset($zipFile) && file_exists($zipFile)) unlink($zipFile);
+            if (isset($extractDir) && is_dir($extractDir)) deleteDirectory($extractDir);
+            $error = 'Fehler beim Download: ' . $e->getMessage();
+        }
+    }
+}
+
 // POST-Handler
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($step === 'install') {
