@@ -1,6 +1,9 @@
 <?php
 // Installationsseite für Stammtisch App
 
+// Output-Buffering starten - ermöglicht Header-Redirects auch nach Output
+ob_start();
+
 // Fehleranzeige aktivieren für Debugging
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -454,8 +457,15 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                     // Aktualisiere needsDownload und setze Success
                     $needsDownload = false;
                     $success = 'Alle Dateien wurden erfolgreich von GitHub heruntergeladen. Du kannst jetzt mit der Installation fortfahren.';
-                    
-                    writeLog('Download-Modus beendet - weiter mit Installationsformular');
+
+                    writeLog('Download-Modus beendet - Redirect zur NEUEN install.php');
+                    writeLog('═══════════════════════════════════════════════════════');
+
+                    // WICHTIG: Redirect zur frisch heruntergeladenen install.php
+                    // Dies verhindert dass die alte install.php weiter ausgeführt wird
+                    ob_end_clean(); // Output-Buffer leeren
+                    header('Location: install.php?step=install&downloaded=1');
+                    exit;
                     
                 } else {
                     writeErrorLog('Konnte extrahierten Ordner nicht finden');
@@ -498,6 +508,7 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
     writeLog('needsDownload Status: ' . ($needsDownload ? 'true' : 'false'));
     writeLog('installed Status: ' . ($installed ? 'true' : 'false'));
     writeLog('step: ' . $step);
+    writeLog('downloaded Parameter: ' . (isset($_GET['downloaded']) ? $_GET['downloaded'] : 'nicht gesetzt'));
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     writeLog('POST-Request erkannt');
@@ -1023,6 +1034,10 @@ PHP;
     }
 }
 
+// Logging vor HTML-Output
+writeLog('Starte HTML-Rendering...');
+writeLog('Variablen vor HTML: error=' . ($error ? 'gesetzt' : 'leer') . ', success=' . ($success ? 'gesetzt' : 'leer'));
+
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -1274,7 +1289,9 @@ PHP;
                 <h1>Stammtisch App Installation</h1>
             </div>
             
-            <?php if ($error): ?>
+            <?php
+            writeLog('HTML-Block: Error-Anzeige (error=' . ($error ? 'ja' : 'nein') . ')');
+            if ($error): ?>
                 <div class="alert alert-error" style="background: #ff4444; color: #ffffff; padding: 30px; border-radius: 12px; margin: 30px 0; font-size: 18px; line-height: 1.8; box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4); border: 3px solid #ff0000; animation: pulse-error 2s infinite;">
                     <strong style="font-size: 24px; display: block; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">❌ KRITISCHER FEHLER:</strong>
                     <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 8px; font-family: 'Monaco', 'Menlo', 'Consolas', monospace; white-space: pre-wrap; word-wrap: break-word; font-size: 16px; border: 1px solid rgba(255,255,255,0.2);"><?= htmlspecialchars($error) ?></div>
@@ -1287,11 +1304,17 @@ PHP;
                 </style>
             <?php endif; ?>
             
-            <?php if ($success): ?>
+            <?php
+            writeLog('HTML-Block: Success-Anzeige (success=' . ($success ? 'ja' : 'nein') . ')');
+            if ($success): ?>
                 <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
             <?php endif; ?>
-            
-            <?php if ($needsDownload && !isset($_POST['skip_download']) && empty($error)): ?>
+
+            <?php
+            writeLog('HTML-Block: Prüfe needsDownload Block (needsDownload=' . ($needsDownload ? 'true' : 'false') . ')');
+            if ($needsDownload && !isset($_POST['skip_download']) && empty($error)):
+                writeLog('HTML-Block: needsDownload Block wird angezeigt');
+            ?>
                 <div class="alert alert-info" style="margin-bottom: 25px; padding: 25px; background: #007AFF; color: #ffffff; border-radius: 12px;">
                     <strong style="font-size: 20px; display: block; margin-bottom: 15px;">📦 Dateien werden von GitHub heruntergeladen...</strong>
                     <p style="font-size: 16px; line-height: 1.6;">Die Installation lädt automatisch alle benötigten Dateien herunter.</p>
@@ -1333,8 +1356,12 @@ PHP;
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
-                
-            <?php elseif (!$installed && $step === 'install' && !$needsDownload): ?>
+
+            <?php
+            writeLog('HTML-Block: Prüfe Installationsformular Block');
+            elseif (!$installed && $step === 'install' && !$needsDownload):
+                writeLog('HTML-Block: Installationsformular wird angezeigt');
+            ?>
                 <form method="POST">
                     <h2>Datenbank-Konfiguration</h2>
                     
@@ -1379,8 +1406,12 @@ PHP;
                     
                     <button type="submit" class="btn-install">🚀 Installation starten</button>
                 </form>
-                
-            <?php elseif ($step === 'complete'): ?>
+
+            <?php
+            writeLog('HTML-Block: Prüfe Complete Block (step=' . $step . ')');
+            elseif ($step === 'complete'):
+                writeLog('HTML-Block: Complete wird angezeigt');
+            ?>
                 <div class="alert alert-success" style="font-size: 20px; padding: 30px; text-align: center;">
                     🎉 <strong>Installation erfolgreich abgeschlossen!</strong>
                 </div>
@@ -1418,7 +1449,11 @@ PHP;
                     </ul>
                 </div>
 
-            <?php elseif ($installed && $step === 'update'): ?>
+            <?php
+            writeLog('HTML-Block: Prüfe Update Block (installed=' . ($installed ? 'true' : 'false') . ', step=' . $step . ')');
+            elseif ($installed && $step === 'update'):
+                writeLog('HTML-Block: Update wird angezeigt');
+            ?>
                 <div class="alert alert-success">
                     ✅ <strong>App ist bereits installiert!</strong>
                 </div>
@@ -1473,8 +1508,15 @@ PHP;
                 <h3 style="color: #ffffff; margin-bottom: 15px; font-size: 18px;">📋 Update-Log:</h3>
                 <pre><?= htmlspecialchars(implode("\n", $output)) ?></pre>
             </div>
-        <?php endif; ?>
+        <?php
+        writeLog('HTML-Block: Ende erreicht');
+        endif; ?>
     </div>
+    <?php writeLog('HTML-Rendering erfolgreich abgeschlossen'); ?>
 </body>
 </html>
+<?php
+// Output-Buffer leeren und ausgeben
+ob_end_flush();
+?>
 
