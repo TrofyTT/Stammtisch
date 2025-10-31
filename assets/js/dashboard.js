@@ -334,65 +334,135 @@ function loadLastGameStats() {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                renderWinner(data.winner);
-                renderLoser(data.loser);
+                renderWinners(data.alltime_winner, data.last_winner);
+                renderLosers(data.alltime_loser, data.last_loser);
             }
         })
         .catch(err => console.error('Fehler beim Laden der Spiel-Stats:', err));
 }
 
-function renderWinner(winner) {
+function renderWinners(alltimeWinner, lastWinner) {
     const container = document.getElementById('winnerContent');
-    
-    if (!winner) {
-        container.innerHTML = '<div class="empty-state-small">Kein Spiel</div>';
+
+    if (!alltimeWinner && !lastWinner) {
+        container.innerHTML = '<div class="empty-state-small">Keine Spiele</div>';
         return;
     }
-    
-    const avatarUrl = winner.avatar 
-        ? `uploads/avatars/${escapeHtml(winner.avatar)}` 
-        : 'assets/img/default-avatar.svg';
-    const winnerColor = winner.color || '#007AFF';
-    
-    container.innerHTML = `
-        <div class="dashboard-player-card">
-            <img src="${avatarUrl}" alt="${escapeHtml(winner.name)}" class="dashboard-player-avatar" style="border-color: ${winnerColor};">
-            <div class="dashboard-player-info">
-                <div class="dashboard-player-name">${escapeHtml(winner.name)}</div>
-                <div class="dashboard-player-points" style="color: ${winnerColor};">
-                    ${winner.total_points || 0} Punkte
+
+    let html = '<div class="ranking-list">';
+
+    // All-Time Gewinner
+    if (alltimeWinner) {
+        const avatarUrl = alltimeWinner.avatar
+            ? `uploads/avatars/${escapeHtml(alltimeWinner.avatar)}`
+            : 'assets/img/default-avatar.svg';
+        const winnerColor = alltimeWinner.color || '#007AFF';
+
+        html += `
+            <div class="ranking-item">
+                <div class="ranking-label">All-Time</div>
+                <div class="dashboard-player-card">
+                    <img src="${avatarUrl}" alt="${escapeHtml(alltimeWinner.name)}" class="dashboard-player-avatar" style="border-color: ${winnerColor};">
+                    <div class="dashboard-player-info">
+                        <div class="dashboard-player-name">${escapeHtml(alltimeWinner.name)}</div>
+                        <div class="dashboard-player-points" style="color: ${winnerColor};">
+                            ${alltimeWinner.total_points || 0} Punkte
+                        </div>
+                    </div>
+                    <div class="dashboard-player-badge winner-badge">👑</div>
                 </div>
             </div>
-            <div class="dashboard-player-badge winner-badge">👑</div>
-        </div>
-    `;
+        `;
+    }
+
+    // Letzter Gewinner
+    if (lastWinner) {
+        const avatarUrl = lastWinner.avatar
+            ? `uploads/avatars/${escapeHtml(lastWinner.avatar)}`
+            : 'assets/img/default-avatar.svg';
+        const winnerColor = lastWinner.color || '#007AFF';
+
+        html += `
+            <div class="ranking-item">
+                <div class="ranking-label">Letzter Stammtisch</div>
+                <div class="dashboard-player-card">
+                    <img src="${avatarUrl}" alt="${escapeHtml(lastWinner.name)}" class="dashboard-player-avatar" style="border-color: ${winnerColor};">
+                    <div class="dashboard-player-info">
+                        <div class="dashboard-player-name">${escapeHtml(lastWinner.name)}</div>
+                        <div class="dashboard-player-points" style="color: ${winnerColor};">
+                            ${lastWinner.total_points || 0} Punkte
+                        </div>
+                    </div>
+                    <div class="dashboard-player-badge winner-badge">👑</div>
+                </div>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
 }
 
-function renderLoser(loser) {
+function renderLosers(alltimeLoser, lastLoser) {
     const container = document.getElementById('loserContent');
-    
-    if (!loser) {
-        container.innerHTML = '<div class="empty-state-small">Kein Spiel</div>';
+
+    if (!alltimeLoser && !lastLoser) {
+        container.innerHTML = '<div class="empty-state-small">Keine Spiele</div>';
         return;
     }
-    
-    const avatarUrl = loser.avatar 
-        ? `uploads/avatars/${escapeHtml(loser.avatar)}` 
-        : 'assets/img/default-avatar.svg';
-    const loserColor = loser.color || '#FF3B30';
-    
-    container.innerHTML = `
-        <div class="dashboard-player-card">
-            <img src="${avatarUrl}" alt="${escapeHtml(loser.name)}" class="dashboard-player-avatar" style="border-color: ${loserColor};">
-            <div class="dashboard-player-info">
-                <div class="dashboard-player-name">${escapeHtml(loser.name)}</div>
-                <div class="dashboard-player-points" style="color: ${loserColor};">
-                    ${loser.total_points || 0} Punkte
+
+    let html = '<div class="ranking-list">';
+
+    // All-Time Loser
+    if (alltimeLoser) {
+        const avatarUrl = alltimeLoser.avatar
+            ? `uploads/avatars/${escapeHtml(alltimeLoser.avatar)}`
+            : 'assets/img/default-avatar.svg';
+        const loserColor = alltimeLoser.color || '#FF3B30';
+
+        html += `
+            <div class="ranking-item">
+                <div class="ranking-label">All-Time</div>
+                <div class="dashboard-player-card">
+                    <img src="${avatarUrl}" alt="${escapeHtml(alltimeLoser.name)}" class="dashboard-player-avatar" style="border-color: ${loserColor};">
+                    <div class="dashboard-player-info">
+                        <div class="dashboard-player-name">${escapeHtml(alltimeLoser.name)}</div>
+                        <div class="dashboard-player-points" style="color: ${loserColor};">
+                            ${alltimeLoser.total_points || 0} Punkte
+                        </div>
+                    </div>
+                    <div class="dashboard-player-badge loser-badge">😢</div>
                 </div>
             </div>
-            <div class="dashboard-player-badge loser-badge">😢</div>
-        </div>
-    `;
+        `;
+    }
+
+    // Letzter Loser
+    if (lastLoser) {
+        const avatarUrl = lastLoser.avatar
+            ? `uploads/avatars/${escapeHtml(lastLoser.avatar)}`
+            : 'assets/img/default-avatar.svg';
+        const loserColor = lastLoser.color || '#FF3B30';
+
+        html += `
+            <div class="ranking-item">
+                <div class="ranking-label">Letzter Stammtisch</div>
+                <div class="dashboard-player-card">
+                    <img src="${avatarUrl}" alt="${escapeHtml(lastLoser.name)}" class="dashboard-player-avatar" style="border-color: ${loserColor};">
+                    <div class="dashboard-player-info">
+                        <div class="dashboard-player-name">${escapeHtml(lastLoser.name)}</div>
+                        <div class="dashboard-player-points" style="color: ${loserColor};">
+                            ${lastLoser.total_points || 0} Punkte
+                        </div>
+                    </div>
+                    <div class="dashboard-player-badge loser-badge">😢</div>
+                </div>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 function loadStats() {

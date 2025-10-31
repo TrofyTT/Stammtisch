@@ -64,17 +64,17 @@ $user = getCurrentUser();
                 </div>
             </div>
             
-            <!-- 1/4: Gewinner letzter Stammtisch -->
-            <div class="dashboard-card" id="lastWinner">
-                <h3>Gewinner letzter Stammtisch</h3>
+            <!-- 1/4: Rangliste (All-Time + Letzter Gewinner) -->
+            <div class="dashboard-card" id="rankingWinners">
+                <h3>Rangliste</h3>
                 <div id="winnerContent">
                     <!-- Wird per JS befüllt -->
                 </div>
             </div>
-            
-            <!-- 1/4: Verlierer letzter Stammtisch -->
-            <div class="dashboard-card" id="lastLoser">
-                <h3>Verlierer letzter Stammtisch</h3>
+
+            <!-- 1/4: Looser (All-Time + Letzter Verlierer) -->
+            <div class="dashboard-card" id="rankingLosers">
+                <h3>Looser</h3>
                 <div id="loserContent">
                     <!-- Wird per JS befüllt -->
                 </div>
