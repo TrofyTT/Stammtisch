@@ -197,78 +197,100 @@ PHP;
             } else {
                 // Lade ZIP von GitHub (verschiedene URL-Formate versuchen)
                 $zipUrls = [
+                    'https://codeload.github.com/TrofyTT/Stammtisch/zip/refs/heads/main',
                     'https://github.com/TrofyTT/Stammtisch/archive/refs/heads/main.zip',
-                    'https://github.com/TrofyTT/Stammtisch/archive/main.zip',
-                    'https://codeload.github.com/TrofyTT/Stammtisch/zip/refs/heads/main'
+                    'https://github.com/TrofyTT/Stammtisch/archive/main.zip'
                 ];
-                $zipUrl = null;
-                $zipData = false;
                 $zipFile = $gitDir . '/update_temp.zip';
                 $extractDir = $gitDir . '/update_temp';
                 
                 try {
-                    // Lade ZIP herunter
+                    // Lade ZIP herunter - versuche verschiedene URLs
                     $output[] = 'Lade ZIP von GitHub...';
-                    
-                    // Versuche zuerst mit cURL (besser für Redirects und SSL)
                     $zipData = false;
+                    $usedUrl = null;
                     
-                    if (function_exists('curl_init')) {
-                        $output[] = 'Verwende cURL...';
-                        $ch = curl_init();
-                        curl_setopt($ch, CURLOPT_URL, $zipUrl);
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-                        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; Stammtisch-Installer)');
-                        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+                    // Versuche jede URL
+                    foreach ($zipUrls as $urlIndex => $testUrl) {
+                        $output[] = "Versuche URL " . ($urlIndex + 1) . "/" . count($zipUrls) . "...";
+                        $zipData = false;
                         
-                        $zipData = curl_exec($ch);
-                        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                        $curlError = curl_error($ch);
-                        curl_close($ch);
-                        
-                        if ($zipData === false || $httpCode !== 200) {
-                            $output[] = 'cURL Fehler: ' . ($curlError ?: 'HTTP Code ' . $httpCode);
-                            $zipData = false;
-                        } else {
-                            $output[] = 'cURL erfolgreich (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
+                        // Methode 1: cURL (besser für Redirects und SSL)
+                        if (function_exists('curl_init')) {
+                            $ch = curl_init();
+                            curl_setopt($ch, CURLOPT_URL, $testUrl);
+                            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+                            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+                            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+                            curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+                            
+                            $zipData = curl_exec($ch);
+                            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+                            $curlError = curl_error($ch);
+                            curl_close($ch);
+                            
+                            if ($zipData !== false && $httpCode === 200) {
+                                // Prüfe ZIP-Signatur (PK = ZIP-Datei)
+                                if (substr($zipData, 0, 2) === "PK") {
+                                    $usedUrl = $testUrl;
+                                    $output[] = '✅ cURL erfolgreich: ' . number_format(strlen($zipData) / 1024, 2) . ' KB (ZIP validiert)';
+                                    break;
+                                } else {
+                                    $output[] = '⚠️ Antwort ist keine ZIP-Datei (HTTP ' . $httpCode . ', Type: ' . $contentType . ')';
+                                    $zipData = false;
+                                }
+                            } else {
+                                $output[] = '❌ cURL Fehler: HTTP ' . $httpCode . ($curlError ? ' - ' . $curlError : '');
+                                $zipData = false;
+                            }
                         }
-                    }
-                    
-                    // Fallback: file_get_contents mit Context
-                    if ($zipData === false && ini_get('allow_url_fopen')) {
-                        $output[] = 'Versuche file_get_contents...';
-                        $context = stream_context_create([
-                            'http' => [
-                                'method' => 'GET',
-                                'header' => [
-                                    'User-Agent: Mozilla/5.0 (compatible; Stammtisch-Installer)',
-                                    'Accept: */*'
+                        
+                        // Methode 2: file_get_contents (Fallback)
+                        if ($zipData === false && ini_get('allow_url_fopen')) {
+                            $context = stream_context_create([
+                                'http' => [
+                                    'method' => 'GET',
+                                    'header' => [
+                                        'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                                        'Accept: */*'
+                                    ],
+                                    'timeout' => 60,
+                                    'follow_location' => true,
+                                    'max_redirects' => 5,
+                                    'ignore_errors' => false
                                 ],
-                                'timeout' => 60,
-                                'follow_location' => true,
-                                'ignore_errors' => true
-                            ],
-                            'ssl' => [
-                                'verify_peer' => false,
-                                'verify_peer_name' => false
-                            ]
-                        ]);
-                        
-                        $zipData = @file_get_contents($zipUrl, false, $context);
-                        
-                        if ($zipData !== false) {
-                            $output[] = 'file_get_contents erfolgreich';
-                        } else {
-                            $output[] = 'file_get_contents fehlgeschlagen';
+                                'ssl' => [
+                                    'verify_peer' => false,
+                                    'verify_peer_name' => false
+                                ]
+                            ]);
+                            
+                            $zipData = @file_get_contents($testUrl, false, $context);
+                            
+                            if ($zipData !== false && strlen($zipData) > 1000) {
+                                // Prüfe ZIP-Signatur
+                                if (substr($zipData, 0, 2) === "PK") {
+                                    $usedUrl = $testUrl;
+                                    $output[] = '✅ file_get_contents erfolgreich: ' . number_format(strlen($zipData) / 1024, 2) . ' KB (ZIP validiert)';
+                                    break;
+                                } else {
+                                    $output[] = '⚠️ Heruntergeladene Datei ist keine ZIP (erste Bytes: ' . bin2hex(substr($zipData, 0, 4)) . ')';
+                                    $zipData = false;
+                                }
+                            } else {
+                                $output[] = '❌ file_get_contents fehlgeschlagen';
+                                $zipData = false;
+                            }
                         }
                     }
                     
                     if ($zipData === false || strlen($zipData) < 1000) {
-                        throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Mögliche Ursachen:<br>- allow_url_fopen ist deaktiviert<br>- cURL ist nicht verfügbar<br>- Server kann externe URLs nicht erreichen<br>- Firewall blockiert GitHub<br><br>Bitte kontaktiere deinen Hoster oder verwende SSH zum Klonen.');
+                        throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Alle URL-Varianten wurden versucht.<br><br>Mögliche Lösungen:<br>1. Prüfe ob der Server externe Verbindungen erlaubt<br>2. Kontaktiere deinen Hoster (allow_url_fopen oder cURL benötigt)<br>3. Lade die Dateien manuell per FTP hoch');
                     }
                     
                     // Speichere ZIP
