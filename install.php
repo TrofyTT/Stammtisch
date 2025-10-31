@@ -256,10 +256,6 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                 $zip->close();
                 writeLog("ZIP erfolgreich entpackt");
                 $output[] = 'ZIP entpackt';
-            } else {
-                writeErrorLog("ZIP konnte nicht geöffnet werden. Fehlercode: $zipResult");
-                throw new Exception("ZIP konnte nicht geöffnet werden. Fehlercode: $zipResult");
-            }
                 
                 // Finde den extrahierten Ordner
                 $extractedFolder = null;
@@ -353,10 +349,12 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                     $needsDownload = false;
                     
                 } else {
+                    writeErrorLog('Konnte extrahierten Ordner nicht finden');
                     throw new Exception('Konnte extrahierten Ordner nicht finden.');
                 }
             } else {
-                throw new Exception('Konnte ZIP nicht entpacken.');
+                writeErrorLog("ZIP konnte nicht geöffnet werden. Fehlercode: $zipResult");
+                throw new Exception("ZIP konnte nicht geöffnet werden. Fehlercode: $zipResult");
             }
             
         } catch (Exception $e) {
