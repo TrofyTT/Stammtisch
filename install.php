@@ -59,8 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $sql = file_get_contents($sqlFile);
                 // Ersetze USE statement
-                $sql = str_replace('USE kdph7973_pimmel;', "USE `$db_name`;", $sql);
-                $sql = str_replace('CREATE DATABASE IF NOT EXISTS kdph7973_pimmel', "CREATE DATABASE IF NOT EXISTS `$db_name`", $sql);
+                // Ersetze Platzhalter in SQL (falls vorhanden)
+                $sql = preg_replace('/USE\s+\[DEINE_DATENBANK\]\s*;/i', "USE `$db_name`;", $sql);
+                $sql = preg_replace('/CREATE\s+DATABASE\s+IF\s+NOT\s+EXISTS\s+\[DEINE_DATENBANK\]/i', "CREATE DATABASE IF NOT EXISTS `$db_name`", $sql);
                 
                 // Führe SQL aus
                 $testDb->exec($sql);
@@ -723,12 +724,12 @@ function deleteDirectory($dir) {
                     
                     <div class="form-group">
                         <label>Datenbank-Name *</label>
-                        <input type="text" name="db_name" placeholder="z.B. kdph7973_pimmel" required>
+                        <input type="text" name="db_name" placeholder="z.B. meine_datenbank" required>
                     </div>
                     
                     <div class="form-group">
                         <label>Datenbank-Benutzer *</label>
-                        <input type="text" name="db_user" placeholder="z.B. kdph7973_pimmel" required>
+                        <input type="text" name="db_user" placeholder="z.B. mein_db_user" required>
                     </div>
                     
                     <div class="form-group">

@@ -8,14 +8,14 @@
 
 ### Dateien hochladen (via FTP)
 - [ ] FTP-Client öffnen (z.B. FileZilla)
-- [ ] Verbindung zu **franggn.de** herstellen
+- [ ] Verbindung zu deiner Domain herstellen
 - [ ] Alle PHP-Dateien hochladen
 - [ ] `assets/` Ordner komplett hochladen
 - [ ] `.htaccess` hochladen
 - [ ] `uploads/avatars/` Ordner anlegen (Berechtigung 755 oder 777)
 
 ### Datenbank einrichten
-- [ ] In phpMyAdmin: Datenbank `kdph7973_pimmel` auswählen
+- [ ] In phpMyAdmin: Deine Datenbank auswählen
 - [ ] Datei `database.sql` importieren
 - [ ] Datenbank-Update-Dateien importieren (falls vorhanden):
   - `database_update.sql`
@@ -25,7 +25,7 @@
   - `database_update5.sql`
 
 ### Testen
-- [ ] Website öffnen: `http://franggn.de` oder `https://franggn.de`
+- [ ] Website öffnen: Deine Domain im Browser
 - [ ] Mit Admin einloggen: `admin@stammtisch.de` / `admin123`
 - [ ] **Sofort Admin-Passwort ändern!**
 - [ ] Avatar-Upload testen
@@ -40,7 +40,7 @@
 **FileZilla einrichten:**
 1. FileZilla öffnen
 2. Neue Verbindung:
-   - **Host:** franggn.de (oder FTP-Adresse von Alfahosting)
+   - **Host:** [DEINE_DOMAIN] (oder FTP-Adresse von Alfahosting)
    - **Benutzername:** (von Alfahosting)
    - **Passwort:** (von Alfahosting)
    - **Port:** 21 (Standard) oder 22 (SFTP)
@@ -70,7 +70,7 @@ Nach dem Upload:
 **Via phpMyAdmin:**
 1. Alfahosting-Kundenpanel öffnen
 2. phpMyAdmin öffnen
-3. Datenbank `kdph7973_pimmel` auswählen
+3. Deine Datenbank auswählen
 4. **Importieren** klicken
 5. Datei `database.sql` auswählen
 6. **Ausführen**
@@ -84,7 +84,7 @@ Nach dem Upload:
 
 ### 5. Erste Schritte
 
-1. **Website öffnen:** `http://franggn.de` oder `https://franggn.de`
+1. **Website öffnen:** Deine Domain im Browser
 2. **Admin-Login:**
    - Email: `admin@stammtisch.de`
    - Passwort: `admin123`
@@ -114,9 +114,9 @@ Nach dem Upload:
 - Die Datenbank-Verbindung verwendet:
   - Host: `127.0.0.1`
   - Port: `3307`
-  - DB: `kdph7973_pimmel`
-  - User: `kdph7973_pimmel`
-  - Pass: `Oh?oNQ&~M428FSv5`
+  - DB: `[DEINE_DATENBANK]`
+  - User: `[DEIN_DB_USER]`
+  - Pass: `[DEIN_DB_PASSWORT]`
 
 ### Sicherheit
 1. **Admin-Passwort sofort ändern!**

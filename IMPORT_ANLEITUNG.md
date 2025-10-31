@@ -4,7 +4,7 @@
 
 1. **Alfahosting-Kundenpanel öffnen**
 2. **phpMyAdmin öffnen**
-3. **Datenbank `kdph7973_pimmel` auswählen** (links in der Liste)
+3. **Deine Datenbank auswählen** (links in der Liste)
 4. **Tab "Importieren" klicken**
 5. **Datei auswählen:** `database_complete.sql`
 6. **Format:** SQL (sollte automatisch erkannt werden)
@@ -19,14 +19,14 @@ Wenn du SSH-Zugriff auf den Alfahosting-Server hast:
 
 ```bash
 # Auf dem Server (via SSH) ausführen:
-mysql -u kdph7973_pimmel -p'Oh?oNQ&~M428FSv5' -h 127.0.0.1 -P 3307 kdph7973_pimmel < database_complete.sql
+mysql -u [DEIN_DB_USER] -p'[DEIN_DB_PASSWORT]' -h 127.0.0.1 -P 3307 [DEINE_DATENBANK] < database_complete.sql
 ```
 
 Oder interaktiv (Passwort wird abgefragt):
 
 ```bash
-mysql -u kdph7973_pimmel -p -h 127.0.0.1 -P 3307 kdph7973_pimmel < database_complete.sql
-# Passwort eingeben: Oh?oNQ&~M428FSv5
+mysql -u [DEIN_DB_USER] -p -h 127.0.0.1 -P 3307 [DEINE_DATENBANK] < database_complete.sql
+# Passwort eingeben: [DEIN_DB_PASSWORT]
 ```
 
 ---
@@ -71,7 +71,7 @@ Die Datei `database_complete.sql` enthält:
 
 **"Access denied" Fehler:**
 - Prüfe die Datenbank-Anmeldedaten
-- Stelle sicher, dass der Benutzer `kdph7973_pimmel` existiert und die richtigen Rechte hat
+- Stelle sicher, dass dein Datenbank-Benutzer existiert und die richtigen Rechte hat
 
 **"Connection refused" Fehler:**
 - Die MySQL-Verbindung ist nur intern erreichbar

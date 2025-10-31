@@ -1,4 +1,4 @@
-# Deployment-Anleitung für Alfahosting (franggn.de)
+# Deployment-Anleitung für Alfahosting
 
 ## Schritt 1: Dateien vorbereiten
 
@@ -29,7 +29,7 @@ mysqldump -u root kdph7973_pimmel > database_export.sql
 ## Schritt 3: FTP-Zugangsdaten prüfen
 
 Du benötigst:
-- **FTP-Host:** franggn.de (oder die von Alfahosting bereitgestellte FTP-Adresse)
+- **FTP-Host:** [DEINE_DOMAIN] (oder die von Alfahosting bereitgestellte FTP-Adresse)
 - **FTP-Port:** 21 (Standard) oder 22 (SFTP)
 - **FTP-Benutzer:** (wird dir von Alfahosting mitgeteilt)
 - **FTP-Passwort:** (wird dir von Alfahosting mitgeteilt)
@@ -75,7 +75,7 @@ Nach dem Hochladen, setze folgende Berechtigungen:
 ### 5.1 Über phpMyAdmin (empfohlen)
 1. Logge dich in das Alfahosting-Kundenpanel ein
 2. Gehe zu **phpMyAdmin**
-3. Wähle die Datenbank `kdph7973_pimmel` aus
+3. Wähle deine Datenbank aus
 4. Klicke auf **Importieren**
 5. Wähle die Datei `database.sql`
 6. Klicke auf **Ausführen**
@@ -84,8 +84,8 @@ Nach dem Hochladen, setze folgende Berechtigungen:
 Falls du SSH-Zugang hast:
 
 ```bash
-mysql -u kdph7973_pimmel -p -h 127.0.0.1 -P 3307 kdph7973_pimmel < database.sql
-# Passwort eingeben: Oh?oNQ&~M428FSv5
+mysql -u [DEIN_DB_USER] -p -h 127.0.0.1 -P 3307 [DEINE_DATENBANK] < database.sql
+# Passwort eingeben: [DEIN_DB_PASSWORT]
 ```
 
 ## Schritt 6: Konfiguration prüfen
@@ -95,21 +95,21 @@ Die `config.php` sollte bereits die richtigen Produktions-Einstellungen haben:
 ```php
 define('DB_HOST', '127.0.0.1');
 define('DB_PORT', '3307');
-define('DB_NAME', 'kdph7973_pimmel');
-define('DB_USER', 'kdph7973_pimmel');
-define('DB_PASS', 'Oh?oNQ&~M428FSv5');
+define('DB_NAME', '[DEINE_DATENBANK]');
+define('DB_USER', '[DEIN_DB_USER]');
+define('DB_PASS', '[DEIN_DB_PASSWORT]');
 ```
 
 **WICHTIG:** Stelle sicher, dass `config.local.php` **NICHT** auf dem Server liegt!
 
 ### 6.2 Domain-Verbindung prüfen
-- Die Anwendung sollte über `http://franggn.de` oder `https://franggn.de` erreichbar sein
+- Die Anwendung sollte über deine Domain erreichbar sein
 - Prüfe, ob SSL/HTTPS aktiviert ist (empfohlen!)
 
 ## Schritt 7: Erste Schritte nach dem Deployment
 
 ### 7.1 Login testen
-1. Öffne `http://franggn.de` (oder `https://franggn.de`)
+1. Öffne deine Domain im Browser
 2. Teste die Registrierung eines neuen Benutzers (falls nötig)
 3. Oder logge dich mit dem Admin-Account ein:
    - **Email:** admin@stammtisch.de
