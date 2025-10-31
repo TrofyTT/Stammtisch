@@ -277,12 +277,20 @@ PHP;
                         mkdir($extractDir, 0755, true);
                     }
                     
+                    // Prüfe ob es wirklich eine ZIP-Datei ist
+                    $fileSignature = @file_get_contents($zipFile, false, null, 0, 4);
+                    if ($fileSignature !== "PK\x03\x04") {
+                        throw new Exception('Heruntergeladene Datei ist keine gültige ZIP-Datei. Möglicherweise wurde eine Fehlerseite heruntergeladen.');
+                    }
+                    $output[] = 'ZIP-Datei validiert';
+                    
                     // Entpacke ZIP
                     $zip = new ZipArchive();
-                    if ($zip->open($zipFile) === TRUE) {
+                    $zipResult = $zip->open($zipFile);
+                    if ($zipResult === TRUE) {
                         $zip->extractTo($extractDir);
                         $zip->close();
-                        $output[] = 'ZIP entpackt';
+                        $output[] = 'ZIP erfolgreich entpackt';
                         
                         // Finde den extrahierten Ordner (normalerweise Stammtisch-main)
                         $extractedFolder = null;
