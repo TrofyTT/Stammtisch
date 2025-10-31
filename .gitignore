@@ -12,3 +12,10 @@ Thumbs.db
 # Installations-Lock (optional - kann auch im Git bleiben)
 # install.lock
 
+# Installations-Dateien im Root (sind jetzt in /install/)
+/install.php
+/database*.sql
+
+# Logs im Root (nur im install/ Ordner)
+/logs/
+
