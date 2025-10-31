@@ -11,6 +11,55 @@ set_time_limit(300); // 5 Minuten
 ini_set('max_execution_time', 300);
 ini_set('memory_limit', '256M');
 
+// ============================================
+// LOGGING-SYSTEM
+// ============================================
+
+// Erstelle logs-Ordner falls nicht vorhanden
+$logDir = __DIR__ . '/logs';
+if (!is_dir($logDir)) {
+    @mkdir($logDir, 0755, true);
+    @file_put_contents($logDir . '/.htaccess', "Deny from all\n");
+}
+
+// Log-Datei erstellen (täglich neue Datei)
+$logFile = $logDir . '/install_' . date('Y-m-d') . '.log';
+
+/**
+ * Schreibt eine Nachricht ins Log-File
+ */
+function writeLog($message, $level = 'INFO') {
+    global $logFile;
+    $timestamp = date('Y-m-d H:i:s');
+    $logEntry = "[$timestamp] [$level] $message\n";
+    @file_put_contents($logFile, $logEntry, FILE_APPEND);
+}
+
+/**
+ * Schreibt einen Fehler ins Log-File
+ */
+function writeErrorLog($message, $exception = null) {
+    global $logFile;
+    $timestamp = date('Y-m-d H:i:s');
+    $logEntry = "[$timestamp] [ERROR] $message\n";
+    if ($exception) {
+        $logEntry .= "[$timestamp] [ERROR] Exception: " . $exception->getMessage() . "\n";
+        $logEntry .= "[$timestamp] [ERROR] File: " . $exception->getFile() . "\n";
+        $logEntry .= "[$timestamp] [ERROR] Line: " . $exception->getLine() . "\n";
+        $logEntry .= "[$timestamp] [ERROR] Trace: " . $exception->getTraceAsString() . "\n";
+    }
+    @file_put_contents($logFile, $logEntry, FILE_APPEND);
+}
+
+// Start-Log
+writeLog('═══════════════════════════════════════════════════════');
+writeLog('Installation gestartet');
+writeLog('PHP Version: ' . PHP_VERSION);
+writeLog('Server: ' . ($_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'));
+writeLog('Request URI: ' . ($_SERVER['REQUEST_URI'] ?? 'Unknown'));
+writeLog('Request Method: ' . ($_SERVER['REQUEST_METHOD'] ?? 'Unknown'));
+writeLog('═══════════════════════════════════════════════════════');
+
 // Hilfsfunktion zum Löschen von Verzeichnissen (MUSS ganz am Anfang sein!)
 if (!function_exists('deleteDirectory')) {
     function deleteDirectory($dir) {
@@ -28,7 +77,7 @@ if (!function_exists('deleteDirectory')) {
             }
             @rmdir($dir);
         } catch (Exception $e) {
-            // Fehler beim Löschen ignorieren
+            writeErrorLog('Fehler beim Löschen von Verzeichnis: ' . $dir, $e);
         }
     }
 }
@@ -80,20 +129,34 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
     $output[] = '';
     $output[] = 'Lade alle Dateien von GitHub herunter...';
     $output[] = '';
+    
+    // Logging
+    writeLog('Download-Modus gestartet');
+    writeLog('PHP-Version: ' . PHP_VERSION);
+    writeLog('ZipArchive: ' . (class_exists('ZipArchive') ? 'Verfügbar' : 'NICHT verfügbar'));
+    writeLog('cURL: ' . (function_exists('curl_init') ? 'Verfügbar' : 'NICHT verfügbar'));
+    writeLog('allow_url_fopen: ' . (ini_get('allow_url_fopen') ? 'Aktiviert' : 'Deaktiviert'));
+    writeLog('Memory Limit: ' . ini_get('memory_limit'));
+    writeLog('Max Execution Time: ' . ini_get('max_execution_time') . ' Sekunden');
+    
     $output[] = 'PHP-Version: ' . PHP_VERSION;
     $output[] = 'ZipArchive: ' . (class_exists('ZipArchive') ? '✅ Verfügbar' : '❌ Nicht verfügbar');
     $output[] = 'cURL: ' . (function_exists('curl_init') ? '✅ Verfügbar' : '❌ Nicht verfügbar');
     $output[] = 'allow_url_fopen: ' . (ini_get('allow_url_fopen') ? '✅ Aktiviert' : '❌ Deaktiviert');
     $output[] = 'Memory Limit: ' . ini_get('memory_limit');
     $output[] = 'Max Execution Time: ' . ini_get('max_execution_time') . ' Sekunden';
+    $output[] = 'Log-Datei: logs/install_' . date('Y-m-d') . '.log';
     $output[] = '';
     
-    // Prüfe ob ZipArchive verfügbar ist
-    if (!class_exists('ZipArchive')) {
-        $error = 'ZipArchive ist nicht verfügbar. Bitte installiere die PHP Zip-Extension auf deinem Server.';
-    } elseif (!function_exists('curl_init') && !ini_get('allow_url_fopen')) {
-        $error = 'Weder cURL noch allow_url_fopen sind verfügbar. Bitte kontaktiere deinen Hoster, um eine dieser Optionen zu aktivieren.';
-    } else {
+            // Prüfe ob ZipArchive verfügbar ist
+            if (!class_exists('ZipArchive')) {
+                $error = 'ZipArchive ist nicht verfügbar. Bitte installiere die PHP Zip-Extension auf deinem Server.';
+                writeErrorLog('ZipArchive ist nicht verfügbar');
+            } elseif (!function_exists('curl_init') && !ini_get('allow_url_fopen')) {
+                $error = 'Weder cURL noch allow_url_fopen sind verfügbar. Bitte kontaktiere deinen Hoster, um eine dieser Optionen zu aktivieren.';
+                writeErrorLog('Weder cURL noch allow_url_fopen verfügbar');
+            } else {
+                writeLog('Extensions-Prüfung erfolgreich - Download kann starten');
         try {
             $gitDir = __DIR__;
             $zipUrls = [
@@ -110,7 +173,9 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
             
             // Versuche jede URL
             foreach ($zipUrls as $urlIndex => $testUrl) {
-                $output[] = "Versuche URL " . ($urlIndex + 1) . "/" . count($zipUrls) . "...";
+                $urlNum = $urlIndex + 1;
+                $output[] = "Versuche URL $urlNum/" . count($zipUrls) . "...";
+                writeLog("Versuche URL $urlNum/" . count($zipUrls) . ": $testUrl");
                 
                 // Methode 1: cURL
                 if (function_exists('curl_init')) {
@@ -129,8 +194,12 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                     curl_close($ch);
                     
                     if ($zipData !== false && $httpCode === 200 && substr($zipData, 0, 2) === "PK") {
-                        $output[] = '✅ ZIP erfolgreich heruntergeladen (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
+                        $size = number_format(strlen($zipData) / 1024, 2);
+                        $output[] = '✅ ZIP erfolgreich heruntergeladen (' . $size . ' KB)';
+                        writeLog("ZIP erfolgreich heruntergeladen via cURL: $size KB von URL $urlNum");
                         break;
+                    } else {
+                        writeLog("cURL fehlgeschlagen für URL $urlNum: HTTP $httpCode");
                     }
                 }
                 
@@ -148,18 +217,29 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                     
                     $zipData = @file_get_contents($testUrl, false, $context);
                     if ($zipData !== false && strlen($zipData) > 1000 && substr($zipData, 0, 2) === "PK") {
-                        $output[] = '✅ ZIP erfolgreich heruntergeladen (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
+                        $size = number_format(strlen($zipData) / 1024, 2);
+                        $output[] = '✅ ZIP erfolgreich heruntergeladen (' . $size . ' KB)';
+                        writeLog("ZIP erfolgreich heruntergeladen via file_get_contents: $size KB von URL $urlNum");
                         break;
+                    } else {
+                        writeLog("file_get_contents fehlgeschlagen für URL $urlNum");
                     }
                 }
             }
             
             if ($zipData === false || strlen($zipData) < 1000) {
+                writeErrorLog('ZIP-Download von allen URLs fehlgeschlagen');
                 throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Bitte kontaktiere deinen Hoster.');
             }
             
             // Speichere ZIP
-            file_put_contents($zipFile, $zipData);
+            writeLog("Speichere ZIP-Datei: $zipFile");
+            $bytes = @file_put_contents($zipFile, $zipData);
+            if ($bytes === false) {
+                writeErrorLog("Konnte ZIP-Datei nicht speichern: $zipFile");
+                throw new Exception('Konnte ZIP-Datei nicht speichern. Prüfe Schreibrechte.');
+            }
+            writeLog("ZIP gespeichert: " . number_format($bytes / 1024, 2) . " KB");
             $output[] = 'ZIP gespeichert';
             
             // Erstelle temporären Extraktions-Ordner
@@ -168,11 +248,18 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
             }
             
             // Entpacke ZIP
+            writeLog("Entpacke ZIP-Datei nach: $extractDir");
             $zip = new ZipArchive();
-            if ($zip->open($zipFile) === TRUE) {
+            $zipResult = $zip->open($zipFile);
+            if ($zipResult === TRUE) {
                 $zip->extractTo($extractDir);
                 $zip->close();
+                writeLog("ZIP erfolgreich entpackt");
                 $output[] = 'ZIP entpackt';
+            } else {
+                writeErrorLog("ZIP konnte nicht geöffnet werden. Fehlercode: $zipResult");
+                throw new Exception("ZIP konnte nicht geöffnet werden. Fehlercode: $zipResult");
+            }
                 
                 // Finde den extrahierten Ordner
                 $extractedFolder = null;
@@ -233,24 +320,33 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                     }
                     
                     $output[] = '✅ ' . $filesCopied . ' Dateien kopiert';
+                    writeLog("$filesCopied Dateien erfolgreich kopiert");
                     
                     // Erstelle uploads/avatars/ Ordner
                     if (!is_dir($gitDir . '/uploads/avatars')) {
-                        mkdir($gitDir . '/uploads/avatars', 0755, true);
+                        @mkdir($gitDir . '/uploads/avatars', 0755, true);
+                        writeLog("uploads/avatars/ Ordner erstellt");
                         $output[] = '✅ uploads/avatars/ Ordner erstellt';
                     }
                     
                     // Erstelle .htaccess für uploads/avatars/
+                    $htaccessPath = $gitDir . '/uploads/avatars/.htaccess';
                     $htaccessContent = "<FilesMatch \"\\.(jpg|jpeg|png|gif|svg|webp)$\">\n    Order Allow,Deny\n    Allow from all\n</FilesMatch>\nphp_flag engine off";
-                    file_put_contents($gitDir . '/uploads/avatars/.htaccess', $htaccessContent);
+                    @file_put_contents($htaccessPath, $htaccessContent);
+                    writeLog(".htaccess für uploads/avatars/ erstellt");
                     $output[] = '✅ .htaccess für uploads/avatars/ erstellt';
                     
                     // Aufräumen
-                    unlink($zipFile);
+                    writeLog("Räume temporäre Dateien auf...");
+                    @unlink($zipFile);
                     deleteDirectory($extractDir);
+                    writeLog("Aufräumen abgeschlossen");
                     
                     $output[] = '';
                     $output[] = '✅ Alle Dateien erfolgreich heruntergeladen und installiert!';
+                    writeLog('═══════════════════════════════════════════════════════');
+                    writeLog('Download erfolgreich abgeschlossen!');
+                    writeLog('═══════════════════════════════════════════════════════');
                     $success = 'Alle Dateien wurden erfolgreich von GitHub heruntergeladen. Du kannst jetzt mit der Installation fortfahren.';
                     
                     // Aktualisiere needsDownload
@@ -264,6 +360,7 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
             }
             
         } catch (Exception $e) {
+            writeErrorLog('Fehler beim Download', $e);
             if (isset($zipFile) && file_exists($zipFile)) @unlink($zipFile);
             if (isset($extractDir) && is_dir($extractDir)) {
                 if (function_exists('deleteDirectory')) {
@@ -274,13 +371,16 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
             $output[] = '';
             $output[] = '❌ FEHLER: ' . $e->getMessage();
             $output[] = 'Stack Trace: ' . $e->getTraceAsString();
+            $output[] = 'Log-Datei: logs/install_' . date('Y-m-d') . '.log';
         } catch (Error $e) {
             // PHP 7+ Fatal Errors abfangen
+            writeErrorLog('PHP Fatal Error', $e);
             $error = 'PHP Fehler: ' . $e->getMessage() . ' in Zeile ' . $e->getLine();
             $output[] = '';
             $output[] = '❌ PHP FEHLER: ' . $e->getMessage();
             $output[] = 'Datei: ' . $e->getFile();
             $output[] = 'Zeile: ' . $e->getLine();
+            $output[] = 'Log-Datei: logs/install_' . date('Y-m-d') . '.log';
         }
     }
     } // Ende der else-Klammer für Extensions-Prüfung
@@ -515,7 +615,9 @@ PHP;
                 $step = 'update';
                 
             } catch (Exception $e) {
+                writeErrorLog('Fehler bei Installation', $e);
                 $error = 'Fehler: ' . $e->getMessage();
+                $output[] = 'Log-Datei: logs/install_' . date('Y-m-d') . '.log';
             }
         }
     } elseif ($step === 'update') {
