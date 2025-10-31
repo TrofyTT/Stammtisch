@@ -4,6 +4,7 @@ uploads/avatars/*
 
 # Lokale Konfiguration
 config.local.php
+config.local.SERVER.php
 
 # System Files
 .DS_Store
