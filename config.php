@@ -15,8 +15,10 @@ if (file_exists(__DIR__ . '/config.local.php')) {
     define('DB_PASS', ''); // Wird bei Installation gesetzt
 }
 
-// Session-Einstellungen
-session_start();
+// Session-Einstellungen (nur starten wenn noch nicht aktiv)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Zeitzone
 date_default_timezone_set('Europe/Berlin');
@@ -25,6 +27,15 @@ date_default_timezone_set('Europe/Berlin');
 function getDB() {
     static $pdo = null;
     if ($pdo === null) {
+        // Prüfe ob DB-Credentials gesetzt sind
+        if (empty(DB_NAME) || empty(DB_USER)) {
+            // Wenn wir in install.php sind, gib null zurück statt einen Fehler zu werfen
+            if (basename($_SERVER['PHP_SELF']) === 'install.php') {
+                return null;
+            }
+            die("Datenbank nicht konfiguriert. Bitte führe install.php aus.");
+        }
+
         try {
             $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
             $options = [
@@ -33,11 +44,11 @@ function getDB() {
                 PDO::ATTR_EMULATE_PREPARES => false,
             ];
             $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-            
+
             // Explizit UTF-8 setzen
             $pdo->exec("SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'");
             $pdo->exec("SET CHARACTER SET utf8mb4");
-            
+
         } catch (PDOException $e) {
             die("Datenbankverbindung fehlgeschlagen: " . $e->getMessage());
         }

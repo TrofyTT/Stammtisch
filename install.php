@@ -166,21 +166,32 @@ if ($configExists) {
     try {
         require_once $configFile;
         writeLog('config.php erfolgreich geladen');
-        if (function_exists('getDB')) {
+
+        // Prüfe ob DB-Credentials gesetzt sind
+        $hasDbCredentials = defined('DB_NAME') && defined('DB_USER') && !empty(DB_NAME) && !empty(DB_USER);
+        writeLog('DB-Credentials gesetzt: ' . ($hasDbCredentials ? 'Ja' : 'Nein'));
+
+        if ($hasDbCredentials && function_exists('getDB')) {
             writeLog('getDB() Funktion verfügbar - teste Datenbankverbindung...');
             try {
                 $db = getDB();
-                writeLog('Datenbankverbindung erfolgreich');
-                // Prüfe ob Tabellen existieren
-                $stmt = $db->query("SHOW TABLES LIKE 'users'");
-                $installed = $stmt->rowCount() > 0;
-                writeLog('Tabelle "users" existiert: ' . ($installed ? 'Ja' : 'Nein'));
+                if ($db !== null) {
+                    writeLog('Datenbankverbindung erfolgreich');
+                    // Prüfe ob Tabellen existieren
+                    $stmt = $db->query("SHOW TABLES LIKE 'users'");
+                    $installed = $stmt->rowCount() > 0;
+                    writeLog('Tabelle "users" existiert: ' . ($installed ? 'Ja' : 'Nein'));
+                } else {
+                    writeLog('getDB() gab null zurück - keine DB-Verbindung möglich');
+                    $installed = false;
+                }
             } catch (PDOException $e) {
                 writeErrorLog('PDO Fehler bei Datenbankverbindung', $e);
                 $installed = false;
             }
         } else {
-            writeLog('WARNUNG: getDB() Funktion nicht verfügbar nach require config.php');
+            writeLog('DB-Credentials fehlen oder getDB() nicht verfügbar - Installation nötig');
+            $installed = false;
         }
     } catch (Exception $e) {
         writeErrorLog('Fehler beim Laden von config.php', $e);
@@ -725,7 +736,12 @@ PHP;
                 
                 $success = 'Installation erfolgreich!';
                 $installed = true;
-                $step = 'update';
+                $step = 'complete';
+
+                writeLog('═══════════════════════════════════════════════════════');
+                writeLog('Installation erfolgreich abgeschlossen!');
+                writeLog('Weiterleitung zu index.php...');
+                writeLog('═══════════════════════════════════════════════════════');
                 
             } catch (Exception $e) {
                 writeErrorLog('Fehler bei Installation', $e);
@@ -1294,7 +1310,7 @@ PHP;
                                 🔄 Erneut versuchen
                             </a>
                         </div>
-                    <?php elseif (empty($error) && !$needsDownload): ?>
+                    <?php elseif (empty($error) && !$needsDownload && !empty($success)): ?>
                         <div style="margin-top: 30px; padding: 20px; background: #1a1a1a; border-radius: 12px; border: 2px solid #00c853;">
                             <p style="color: #00c853; font-size: 18px; margin-bottom: 20px; text-align: center;">
                                 ✅ <strong>Download erfolgreich abgeschlossen!</strong>
@@ -1303,9 +1319,13 @@ PHP;
                                 Die Seite wird jetzt automatisch neu geladen, um mit der Installation fortzufahren...
                             </p>
                             <script>
-                                setTimeout(function() {
-                                    window.location.href = 'install.php?step=install';
-                                }, 2000);
+                                // Nur einmal reloaden - verhindere Loop
+                                if (!sessionStorage.getItem('install_download_complete')) {
+                                    sessionStorage.setItem('install_download_complete', 'true');
+                                    setTimeout(function() {
+                                        window.location.href = 'install.php?step=install';
+                                    }, 2000);
+                                }
                             </script>
                             <a href="install.php?step=install" class="btn-install" style="text-decoration: none; display: block; text-align: center; margin-top: 20px;">
                                 → Jetzt zur Installation
@@ -1314,7 +1334,7 @@ PHP;
                     <?php endif; ?>
                 <?php endif; ?>
                 
-            <?php if (!$installed && $step === 'install' && !$needsDownload): ?>
+            <?php elseif (!$installed && $step === 'install' && !$needsDownload): ?>
                 <form method="POST">
                     <h2>Datenbank-Konfiguration</h2>
                     
@@ -1360,6 +1380,44 @@ PHP;
                     <button type="submit" class="btn-install">🚀 Installation starten</button>
                 </form>
                 
+            <?php elseif ($step === 'complete'): ?>
+                <div class="alert alert-success" style="font-size: 20px; padding: 30px; text-align: center;">
+                    🎉 <strong>Installation erfolgreich abgeschlossen!</strong>
+                </div>
+
+                <div style="margin-top: 30px; padding: 25px; background: #1a1a1a; border-radius: 12px; border: 2px solid #00c853; text-align: center;">
+                    <p style="color: #ffffff; font-size: 18px; margin-bottom: 20px;">
+                        Die Stammtisch App wurde erfolgreich installiert!
+                    </p>
+                    <p style="color: #cccccc; margin-bottom: 30px;">
+                        Du wirst jetzt automatisch zur Login-Seite weitergeleitet...
+                    </p>
+                    <script>
+                        setTimeout(function() {
+                            window.location.href = 'index.php';
+                        }, 2000);
+                    </script>
+                    <a href="index.php" class="btn-install" style="text-decoration: none; display: block; text-align: center;">
+                        → Jetzt zur Login-Seite
+                    </a>
+                </div>
+
+                <div class="info-box">
+                    <p><strong>✅ Was wurde installiert?</strong></p>
+                    <ul style="color: #cccccc; line-height: 1.8; margin-left: 20px;">
+                        <li>✅ Datenbank erstellt und initialisiert</li>
+                        <li>✅ Admin-Account angelegt</li>
+                        <li>✅ Alle Tabellen eingerichtet</li>
+                        <li>✅ Upload-Ordner erstellt</li>
+                    </ul>
+                    <p style="margin-top: 20px;"><strong>📝 Nächste Schritte:</strong></p>
+                    <ul style="color: #cccccc; line-height: 1.8; margin-left: 20px;">
+                        <li>Melde dich mit deinen Admin-Zugangsdaten an</li>
+                        <li>Lege weitere Benutzer an</li>
+                        <li>Erstelle deinen ersten Termin</li>
+                    </ul>
+                </div>
+
             <?php elseif ($installed && $step === 'update'): ?>
                 <div class="alert alert-success">
                     ✅ <strong>App ist bereits installiert!</strong>
