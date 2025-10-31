@@ -22,6 +22,14 @@ if ($configExists) {
 $step = $_GET['step'] ?? ($installed ? 'update' : 'install');
 $error = null;
 $success = null;
+$output = [];
+
+// Prüfe ob Dateien heruntergeladen werden müssen
+$needsDownload = !$installed && (
+    !file_exists(__DIR__ . '/api.php') || 
+    !file_exists(__DIR__ . '/index.php') || 
+    !file_exists(__DIR__ . '/assets/css/style.css')
+);
 
 // POST-Handler
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
