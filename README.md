@@ -14,7 +14,7 @@ Eine moderne Web-Anwendung für die Verwaltung von Stammtisch-Terminen, Anwesenh
 
 ## 🚀 Tech Stack
 
-- **Backend:** PHP 7.4+
+- **Backend:** PHP 8.3+
 - **Datenbank:** MySQL 8.0
 - **Frontend:** Vanilla JavaScript, CSS3
 - **Charts:** Chart.js
