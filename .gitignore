@@ -9,3 +9,6 @@ config.local.php
 .DS_Store
 Thumbs.db
 
+# Installations-Lock (optional - kann auch im Git bleiben)
+# install.lock
+
