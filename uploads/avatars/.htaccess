@@ -1,16 +1,15 @@
-# Zugriff auf Avatar-Uploads erlauben
+# .htaccess für Avatar-Uploads
 # ALFAHOSTING-KOMPATIBEL (Apache 2.4)
 
 # Verzeichnis-Listing deaktivieren
 Options -Indexes
 
-# Erlaube Zugriff auf Bild-Dateien (Apache 2.4 Syntax)
+# Erlaube direkten Zugriff auf alle Bild-Dateien (Apache 2.4 Syntax)
 <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg)$">
     Require all granted
 </FilesMatch>
 
-# Blockiere alle anderen Dateien
+# Blockiere PHP-Ausführung aus Sicherheitsgründen
 <FilesMatch "\.php$">
     Require all denied
 </FilesMatch>
-

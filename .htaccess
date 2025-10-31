@@ -13,16 +13,14 @@ Options -Indexes
 # DirectoryIndex
 DirectoryIndex index.php index.html
 
-# Sicherheit: Verstecke sensible Dateien
+# Sicherheit: Verstecke sensible Dateien (Apache 2.4 Syntax)
 <FilesMatch "^(config\.php|config\.local\.php|\.git.*|\.env|composer\.json|composer\.lock|package\.json)$">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
-# Erlaube Zugriff auf install.php (für Installation)
+# Erlaube Zugriff auf install.php (für Installation) - Apache 2.4 Syntax
 <Files "install.php">
-    Order allow,deny
-    Allow from all
+    Require all granted
 </Files>
 
 # Rewrite-Engine (falls mod_rewrite verfügbar)

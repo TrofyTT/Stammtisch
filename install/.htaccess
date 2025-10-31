@@ -10,14 +10,12 @@ Options -Indexes
 # DirectoryIndex
 DirectoryIndex install.php
 
-# Sicherheit: Nur install.php ist zugänglich
+# Sicherheit: Nur install.php ist zugänglich (Apache 2.4 Syntax)
 <FilesMatch "^(database_complete\.sql|\.user\.ini|README\.md|ALFAHOSTING_ANLEITUNG\.md)$">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
-# Erlaube Zugriff auf install.php
+# Erlaube Zugriff auf install.php (Apache 2.4 Syntax)
 <Files "install.php">
-    Order allow,deny
-    Allow from all
+    Require all granted
 </Files>
