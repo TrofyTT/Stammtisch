@@ -1,61 +1,53 @@
-# 🍺 Stammtisch App
+# Stammtisch App
 
-Eine moderne Web-Anwendung für die Verwaltung von Stammtisch-Terminen, Anwesenheiten, Spielen und Achievements.
+Web-basierte Verwaltung für Stammtisch-Treffen, Spiele und Achievements.
 
-## ✨ Features
+## Technologie
 
-- 📅 **Terminverwaltung** - Erstelle und verwalte Stammtisch-Termine
-- 👥 **Anwesenheitserfassung** - Tracke Anwesenheit, Nicht-Anwesenheit und Unentschuldigte Abwesenheiten
-- 🎮 **6 Nimmt! Spiel** - Erfasse Spielrunden mit Live-Charts und Statistiken
-- 🏆 **Achievement-System** - Automatische Achievements für Spieler
-- 📊 **Statistiken** - Detaillierte Auswertungen und Visualisierungen
-- 👤 **Benutzerverwaltung** - Mit Avataren, Rängen und individuellen Farben
-- 🔄 **Auto-Update** - Git-basierte Updates direkt aus dem Admin-Panel
+- PHP 8.0+ (Alfahosting)
+- MySQL 8.0
+- Vanilla JavaScript
+- Apache 2.4
 
-## 🚀 Tech Stack
+## Server-Zugriff
 
-- **Backend:** PHP 8.3+
-- **Datenbank:** MySQL 8.0
-- **Frontend:** Vanilla JavaScript, CSS3
-- **Charts:** Chart.js
-- **Design:** Apple-inspired, mobile-first
+- **URL:** https://franggn.de
+- **Admin:** https://franggn.de/admin.php
+- **Updates:** https://franggn.de/update.php
 
-## 📋 Installation
+## Update-System
 
-Siehe `DEPLOYMENT.md` für eine ausführliche Installationsanleitung.
+Das Projekt nutzt ein ZIP-basiertes Update-System (kein Git auf Server):
 
-### Schnellstart
+1. Gehe zu: https://franggn.de/update.php
+2. Klicke auf "🚀 Jetzt Update starten"
+3. System lädt automatisch neueste Version von GitHub
+4. Erstellt Backup und aktualisiert alle Dateien
 
-1. Datenbank erstellen und `database_complete.sql` importieren
-2. Dateien auf den Server hochladen
-3. Konfiguration in `config.php` prüfen
-4. Fertig! ✅
+**Geschützte Dateien (werden NICHT überschrieben):**
+- `config.local.php` - Datenbank-Credentials
+- `uploads/` - Avatar-Bilder
+- `logs/` - Log-Dateien
 
-## 🔧 Konfiguration
+## Entwicklung
 
-Die App erkennt automatisch, ob sie lokal oder auf dem Server läuft:
-- **Lokal:** Nutzt `config.local.php` (nicht im Git)
-- **Produktion:** Nutzt Standard-Einstellungen in `config.php`
+**Web-Only:** Alle Änderungen direkt auf dem Server via FTP/SFTP.
 
-## 📱 Mobile-First
+**GitHub Sync:** Nach Änderungen committen und pushen, dann via update.php auf Server aktualisieren.
 
-Die App ist vollständig für mobile Geräte optimiert mit:
-- Responsive Design
-- Touch-optimierte Buttons
-- Burger-Menü
-- Card-basierte Layouts
+## Features
 
-## 🔐 Admin-Features
+- ✅ Termin-Verwaltung
+- ✅ Anwesenheits-Tracking
+- ✅ Spiele (6 Nimmt!)
+- ✅ Achievements-System
+- ✅ Ranglisten (All-Time & Letzte)
+- ✅ Avatar-Upload
+- ✅ Admin-Panel
 
-- Benutzerverwaltung
-- Achievement-Verwaltung
-- Einstellungen
-- **Git-Update** - Lade Updates direkt aus dem Admin-Panel
+## Sicherheit
 
-## 📝 Lizenz
-
-Private Projekt - Alle Rechte vorbehalten
-
----
-
-**Entwickelt mit ❤️ für den Stammtisch**
+- Session-basierte Authentifizierung
+- Admin-Rechte-System
+- Geschützte Uploads (keine PHP-Ausführung)
+- .htaccess Zugriffskontrolle

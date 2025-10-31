@@ -2,21 +2,13 @@
 uploads/avatars/*
 !uploads/avatars/.htaccess
 
-# Lokale Konfiguration
+# Lokale Konfiguration (enthält Produktiv-DB-Credentials)
 config.local.php
-config.local.SERVER.php
 
 # System Files
 .DS_Store
 Thumbs.db
 
-# Installations-Lock (optional - kann auch im Git bleiben)
-# install.lock
-
-# Installations-Dateien im Root (sind jetzt in /install/)
-/install.php
-/database*.sql
-
-# Logs im Root (nur im install/ Ordner)
-/logs/
+# Logs
+logs/
 
