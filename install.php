@@ -11,6 +11,28 @@ set_time_limit(300); // 5 Minuten
 ini_set('max_execution_time', 300);
 ini_set('memory_limit', '256M');
 
+// Hilfsfunktion zum Löschen von Verzeichnissen (MUSS ganz am Anfang sein!)
+if (!function_exists('deleteDirectory')) {
+    function deleteDirectory($dir) {
+        if (!is_dir($dir)) return;
+        
+        try {
+            $files = array_diff(scandir($dir), array('.', '..'));
+            foreach ($files as $file) {
+                $path = $dir . '/' . $file;
+                if (is_dir($path)) {
+                    deleteDirectory($path);
+                } else {
+                    @unlink($path);
+                }
+            }
+            @rmdir($dir);
+        } catch (Exception $e) {
+            // Fehler beim Löschen ignorieren
+        }
+    }
+}
+
 // Prüfe ob bereits installiert
 $configFile = __DIR__ . '/config.php';
 $installed = false;
@@ -761,28 +783,6 @@ PHP;
                     $error = 'Fehler beim ZIP-Download: ' . $e->getMessage();
                 }
             }
-        }
-    }
-}
-
-// Hilfsfunktion zum Löschen von Verzeichnissen
-if (!function_exists('deleteDirectory')) {
-    function deleteDirectory($dir) {
-        if (!is_dir($dir)) return;
-        
-        try {
-            $files = array_diff(scandir($dir), array('.', '..'));
-            foreach ($files as $file) {
-                $path = $dir . '/' . $file;
-                if (is_dir($path)) {
-                    deleteDirectory($path);
-                } else {
-                    @unlink($path);
-                }
-            }
-            @rmdir($dir);
-        } catch (Exception $e) {
-            // Fehler beim Löschen ignorieren
         }
     }
 }
