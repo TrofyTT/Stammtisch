@@ -62,16 +62,29 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) use ($logFile) {
 });
 
 // Shutdown Handler - Fängt Fatal Errors ab, die nicht vom Error Handler gefangen werden
-register_shutdown_function(function() use ($logFile) {
-    $error = error_get_last();
-    if ($error !== NULL && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        $timestamp = date('Y-m-d H:i:s');
-        $logEntry = "[$timestamp] [FATAL ERROR - SHUTDOWN] " . $error['message'] . "\n";
-        $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] File: " . $error['file'] . "\n";
-        $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] Line: " . $error['line'] . "\n";
-        @file_put_contents($logFile, $logEntry, FILE_APPEND);
-    }
-});
+    register_shutdown_function(function() use ($logFile) {
+        $error = error_get_last();
+        if ($error !== NULL && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+            $timestamp = date('Y-m-d H:i:s');
+            $logEntry = "[$timestamp] [FATAL ERROR - SHUTDOWN] " . $error['message'] . "\n";
+            $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] File: " . $error['file'] . "\n";
+            $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] Line: " . $error['line'] . "\n";
+            $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] Type: " . $error['type'] . "\n";
+            @file_put_contents($logFile, $logEntry, FILE_APPEND);
+            
+            // Versuche auch im Browser anzuzeigen (falls noch möglich)
+            if (!headers_sent()) {
+                header('Content-Type: text/html; charset=utf-8');
+                echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fatal Error</title></head><body style="background: #000; color: #f00; padding: 30px; font-family: monospace;">';
+                echo '<h1>FATAL ERROR</h1>';
+                echo '<pre>' . htmlspecialchars($error['message']) . '</pre>';
+                echo '<p>File: ' . htmlspecialchars($error['file']) . '</p>';
+                echo '<p>Line: ' . $error['line'] . '</p>';
+                echo '<p>Log: logs/install_' . date('Y-m-d') . '.log</p>';
+                echo '</body></html>';
+            }
+        }
+    });
 
 // ============================================
 // LOGGING-SYSTEM
@@ -469,9 +482,13 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
     } // Ende der else-Klammer für Extensions-Prüfung
 }
 
-// POST-Handler
-writeLog('Prüfe Request-Methode: ' . $_SERVER['REQUEST_METHOD']);
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // POST-Handler
+    writeLog('Prüfe Request-Methode: ' . $_SERVER['REQUEST_METHOD']);
+    writeLog('needsDownload Status: ' . ($needsDownload ? 'true' : 'false'));
+    writeLog('installed Status: ' . ($installed ? 'true' : 'false'));
+    writeLog('step: ' . $step);
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     writeLog('POST-Request erkannt');
     writeLog('POST-Daten: ' . json_encode(array_keys($_POST)));
     
@@ -1277,19 +1294,27 @@ PHP;
                                 🔄 Erneut versuchen
                             </a>
                         </div>
-                    <?php else: ?>
-                        <div style="margin-top: 30px;">
-                            <form method="POST">
-                                <input type="hidden" name="skip_download" value="1">
-                                <button type="submit" class="btn-install">
-                                    ✅ Weiter zur Installation
-                                </button>
-                            </form>
+                    <?php elseif (empty($error) && !$needsDownload): ?>
+                        <div style="margin-top: 30px; padding: 20px; background: #1a1a1a; border-radius: 12px; border: 2px solid #00c853;">
+                            <p style="color: #00c853; font-size: 18px; margin-bottom: 20px; text-align: center;">
+                                ✅ <strong>Download erfolgreich abgeschlossen!</strong>
+                            </p>
+                            <p style="color: #cccccc; text-align: center; margin-bottom: 20px;">
+                                Die Seite wird jetzt automatisch neu geladen, um mit der Installation fortzufahren...
+                            </p>
+                            <script>
+                                setTimeout(function() {
+                                    window.location.href = 'install.php?step=install';
+                                }, 2000);
+                            </script>
+                            <a href="install.php?step=install" class="btn-install" style="text-decoration: none; display: block; text-align: center; margin-top: 20px;">
+                                → Jetzt zur Installation
+                            </a>
                         </div>
                     <?php endif; ?>
                 <?php endif; ?>
                 
-            <?php elseif (!$installed && $step === 'install'): ?>
+            <?php if (!$installed && $step === 'install' && !$needsDownload): ?>
                 <form method="POST">
                     <h2>Datenbank-Konfiguration</h2>
                     
