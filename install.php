@@ -788,10 +788,16 @@ function deleteDirectory($dir) {
             </div>
             
             <?php if ($error): ?>
-                <div class="alert alert-error">
-                    <strong>❌ Fehler:</strong><br>
-                    <?= nl2br(htmlspecialchars($error)) ?>
+                <div class="alert alert-error" style="background: #ff4444; color: #ffffff; padding: 30px; border-radius: 12px; margin: 30px 0; font-size: 18px; line-height: 1.8; box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4); border: 3px solid #ff0000; animation: pulse-error 2s infinite;">
+                    <strong style="font-size: 24px; display: block; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">❌ KRITISCHER FEHLER:</strong>
+                    <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 8px; font-family: 'Monaco', 'Menlo', 'Consolas', monospace; white-space: pre-wrap; word-wrap: break-word; font-size: 16px; border: 1px solid rgba(255,255,255,0.2);"><?= htmlspecialchars($error) ?></div>
                 </div>
+                <style>
+                    @keyframes pulse-error {
+                        0%, 100% { box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4); }
+                        50% { box-shadow: 0 6px 30px rgba(255, 68, 68, 0.7); }
+                    }
+                </style>
             <?php endif; ?>
             
             <?php if ($success): ?>
