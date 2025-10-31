@@ -203,15 +203,74 @@ PHP;
                 try {
                     // Lade ZIP herunter
                     $output[] = 'Lade ZIP von GitHub...';
-                    $zipData = @file_get_contents($zipUrl);
                     
-                    if ($zipData === false) {
-                        throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Bitte prüfe die Internetverbindung.');
+                    // Versuche zuerst mit cURL (besser für Redirects und SSL)
+                    $zipData = false;
+                    
+                    if (function_exists('curl_init')) {
+                        $output[] = 'Verwende cURL...';
+                        $ch = curl_init();
+                        curl_setopt($ch, CURLOPT_URL, $zipUrl);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (compatible; Stammtisch-Installer)');
+                        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+                        
+                        $zipData = curl_exec($ch);
+                        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                        $curlError = curl_error($ch);
+                        curl_close($ch);
+                        
+                        if ($zipData === false || $httpCode !== 200) {
+                            $output[] = 'cURL Fehler: ' . ($curlError ?: 'HTTP Code ' . $httpCode);
+                            $zipData = false;
+                        } else {
+                            $output[] = 'cURL erfolgreich (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
+                        }
+                    }
+                    
+                    // Fallback: file_get_contents mit Context
+                    if ($zipData === false && ini_get('allow_url_fopen')) {
+                        $output[] = 'Versuche file_get_contents...';
+                        $context = stream_context_create([
+                            'http' => [
+                                'method' => 'GET',
+                                'header' => [
+                                    'User-Agent: Mozilla/5.0 (compatible; Stammtisch-Installer)',
+                                    'Accept: */*'
+                                ],
+                                'timeout' => 60,
+                                'follow_location' => true,
+                                'ignore_errors' => true
+                            ],
+                            'ssl' => [
+                                'verify_peer' => false,
+                                'verify_peer_name' => false
+                            ]
+                        ]);
+                        
+                        $zipData = @file_get_contents($zipUrl, false, $context);
+                        
+                        if ($zipData !== false) {
+                            $output[] = 'file_get_contents erfolgreich';
+                        } else {
+                            $output[] = 'file_get_contents fehlgeschlagen';
+                        }
+                    }
+                    
+                    if ($zipData === false || strlen($zipData) < 1000) {
+                        throw new Exception('Konnte ZIP nicht von GitHub herunterladen. Mögliche Ursachen:<br>- allow_url_fopen ist deaktiviert<br>- cURL ist nicht verfügbar<br>- Server kann externe URLs nicht erreichen<br>- Firewall blockiert GitHub<br><br>Bitte kontaktiere deinen Hoster oder verwende SSH zum Klonen.');
                     }
                     
                     // Speichere ZIP
-                    file_put_contents($zipFile, $zipData);
-                    $output[] = 'ZIP heruntergeladen (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
+                    $bytesWritten = file_put_contents($zipFile, $zipData);
+                    if ($bytesWritten === false) {
+                        throw new Exception('Konnte ZIP-Datei nicht speichern. Bitte prüfe Schreibrechte.');
+                    }
+                    $output[] = 'ZIP heruntergeladen und gespeichert (' . number_format(strlen($zipData) / 1024, 2) . ' KB)';
                     
                     // Erstelle temporären Extraktions-Ordner
                     if (!is_dir($extractDir)) {
