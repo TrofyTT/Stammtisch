@@ -195,93 +195,237 @@ PHP;
     <title>Installation - Stammtisch App</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
         .install-container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 30px;
+            max-width: 700px;
+            width: 100%;
         }
+        
         .install-step {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 30px;
+            background: #2a2a2a;
+            border: 1px solid #404040;
+            border-radius: 16px;
+            padding: 40px;
             margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .btn-install {
-            width: 100%;
-            padding: 15px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-install:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-        }
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-        .alert-success {
-            background: rgba(52, 199, 89, 0.2);
-            border: 1px solid #34C759;
-            color: #34C759;
-        }
-        .alert-error {
-            background: rgba(255, 59, 48, 0.2);
-            border: 1px solid #FF3B30;
-            color: #FF3B30;
-        }
-        .alert-info {
-            background: rgba(0, 122, 255, 0.2);
-            border: 1px solid #007AFF;
-            color: #007AFF;
-        }
+        
         .step-header {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #404040;
         }
+        
         .step-number {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            background: var(--primary);
+            background: linear-gradient(135deg, #007AFF, #5856D6);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
+            font-size: 24px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+        
+        .step-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 15px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px 18px;
+            border: 2px solid #404040;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #ffffff;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #007AFF;
+            background: #252525;
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+        
+        .form-group input::placeholder {
+            color: #888888;
+        }
+        
+        .form-group h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+        
+        hr {
+            margin: 35px 0;
+            border: none;
+            border-top: 2px solid #404040;
+        }
+        
+        .btn-install {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #007AFF, #5856D6);
+            color: white;
+            border: none;
+            border-radius: 12px;
             font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+            margin-top: 10px;
+        }
+        
+        .btn-install:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+        }
+        
+        .btn-install:active {
+            transform: translateY(0);
+        }
+        
+        .alert {
+            padding: 18px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-size: 15px;
+            line-height: 1.5;
+            border: 2px solid;
+        }
+        
+        .alert-success {
+            background: rgba(52, 199, 89, 0.15);
+            border-color: #34C759;
+            color: #34C759;
+        }
+        
+        .alert-error {
+            background: rgba(255, 59, 48, 0.15);
+            border-color: #FF3B30;
+            color: #FF3B30;
+        }
+        
+        .alert-info {
+            background: rgba(0, 122, 255, 0.15);
+            border-color: #007AFF;
+            color: #007AFF;
+        }
+        
+        .update-section {
+            background: #1a1a1a;
+            border: 2px solid #404040;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 25px;
+        }
+        
+        .update-section h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+        
+        .update-section p {
+            color: #cccccc;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .info-box {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #404040;
+        }
+        
+        .info-box p {
+            color: #aaaaaa;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .info-box a {
+            color: #007AFF;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .info-box a:hover {
+            text-decoration: underline;
+        }
+        
+        pre {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            border: 1px solid #404040;
+            color: #cccccc;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+        }
+        
+        @media (max-width: 768px) {
+            .install-step {
+                padding: 25px;
+            }
+            
+            .step-header h1 {
+                font-size: 22px;
+            }
+            
+            .step-number {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
         }
     </style>
 </head>
