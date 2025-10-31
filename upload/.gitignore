@@ -1,0 +1,4 @@
+# Alles außer install.php und logs/ kann hier sein
+# install.php wird ins Git committed
+# logs/ wird auch ins Git committed (für .htaccess)
+
