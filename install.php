@@ -196,7 +196,7 @@ $needsDownload = !$installed && (
 );
 
 // Auto-Download beim ersten Aufruf (wenn Dateien fehlen)
-if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['skip_download'])) {
+if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['skip_download']) && !isset($_GET['download'])) {
     // Prüfe PHP-Extensions
     if (!class_exists('ZipArchive')) {
         $error = 'ZipArchive ist nicht verfügbar. Bitte installiere die PHP Zip-Extension auf deinem Server.';
@@ -426,10 +426,12 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                     writeLog('═══════════════════════════════════════════════════════');
                     writeLog('Download erfolgreich abgeschlossen!');
                     writeLog('═══════════════════════════════════════════════════════');
+                    
+                    // Aktualisiere needsDownload und setze Success
+                    $needsDownload = false;
                     $success = 'Alle Dateien wurden erfolgreich von GitHub heruntergeladen. Du kannst jetzt mit der Installation fortfahren.';
                     
-                    // Aktualisiere needsDownload
-                    $needsDownload = false;
+                    writeLog('Download-Modus beendet - weiter mit Installationsformular');
                     
                 } else {
                     writeErrorLog('Konnte extrahierten Ordner nicht finden');
