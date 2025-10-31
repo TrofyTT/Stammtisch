@@ -1,34 +1,32 @@
-# Stammtisch App - Apache Konfiguration
+# .htaccess für Stammtisch App Root-Verzeichnis
+# ALFAHOSTING-KOMPATIBEL (PHP-FPM)
 
-# PHP Settings
-php_flag display_errors Off
-php_flag log_errors On
+# WICHTIG: PHP-Einstellungen für Alfahosting gehören in .user.ini (nicht hier!)
+# Die php_value und php_flag Direktiven funktionieren NICHT mit PHP-FPM
 
-# Session Settings
-php_value session.cookie_httponly 1
-php_value session.cookie_secure 0
-php_value session.use_strict_mode 1
+# Zeichenkodierung
+AddDefaultCharset UTF-8
 
-# Security Headers
-<IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "SAMEORIGIN"
-    Header set X-XSS-Protection "1; mode=block"
+# Verzeichnis-Listing deaktivieren
+Options -Indexes
+
+# DirectoryIndex
+DirectoryIndex index.php index.html
+
+# Sicherheit: Verstecke sensible Dateien
+<FilesMatch "^(config\.php|config\.local\.php|\.git.*|\.env|composer\.json|composer\.lock|package\.json)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Erlaube Zugriff auf install.php (für Installation)
+<Files "install.php">
+    Order allow,deny
+    Allow from all
+</Files>
+
+# Rewrite-Engine (falls mod_rewrite verfügbar)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
 </IfModule>
-
-# Compression
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
-</IfModule>
-
-# Cache Control für Assets
-<IfModule mod_expires.c>
-    ExpiresActive On
-    ExpiresByType image/jpg "access plus 1 year"
-    ExpiresByType image/jpeg "access plus 1 year"
-    ExpiresByType image/gif "access plus 1 year"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
-</IfModule>
-

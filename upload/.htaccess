@@ -1,16 +1,8 @@
 # .htaccess für Stammtisch App Root-Verzeichnis
+# ALFAHOSTING-KOMPATIBEL (PHP-FPM)
 
-# PHP-Einstellungen optimieren
-php_value upload_max_filesize 10M
-php_value post_max_size 10M
-php_value max_execution_time 300
-php_value max_input_time 300
-php_value memory_limit 256M
-
-# Error Reporting aktivieren (für Installation)
-php_flag display_errors on
-php_flag log_errors on
-php_value error_reporting 32767
+# WICHTIG: PHP-Einstellungen für Alfahosting gehören in .user.ini (nicht hier!)
+# Die php_value und php_flag Direktiven funktionieren NICHT mit PHP-FPM
 
 # Zeichenkodierung
 AddDefaultCharset UTF-8

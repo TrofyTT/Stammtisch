@@ -459,70 +459,68 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
                     writeLog('═══════════════════════════════════════════════════════');
 
                     // WICHTIG: Redirect zur frisch heruntergeladenen install.php
-                    // Verwende HTML-Meta-Redirect statt header() (verhindert 500 Error)
-                    ?>
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta http-equiv="refresh" content="1;url=install.php?step=install&downloaded=1">
-                        <title>Download erfolgreich - Weiterleitung...</title>
-                        <style>
-                            body {
-                                background: #1a1a1a;
-                                color: #fff;
-                                font-family: system-ui, -apple-system, sans-serif;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                min-height: 100vh;
-                                margin: 0;
-                            }
-                            .redirect-box {
-                                text-align: center;
-                                padding: 40px;
-                                background: #2a2a2a;
-                                border-radius: 16px;
-                                box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-                            }
-                            .spinner {
-                                width: 50px;
-                                height: 50px;
-                                border: 4px solid #404040;
-                                border-top: 4px solid #007AFF;
-                                border-radius: 50%;
-                                animation: spin 1s linear infinite;
-                                margin: 0 auto 20px;
-                            }
-                            @keyframes spin {
-                                0% { transform: rotate(0deg); }
-                                100% { transform: rotate(360deg); }
-                            }
-                            h1 { color: #00c853; margin-bottom: 10px; }
-                            p { color: #cccccc; }
-                            a {
-                                color: #007AFF;
-                                text-decoration: none;
-                                display: inline-block;
-                                margin-top: 20px;
-                                padding: 12px 24px;
-                                background: #007AFF;
-                                color: white;
-                                border-radius: 8px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="redirect-box">
-                            <div class="spinner"></div>
-                            <h1>✅ Download erfolgreich!</h1>
-                            <p>52 Dateien wurden installiert.</p>
-                            <p>Du wirst automatisch weitergeleitet...</p>
-                            <a href="install.php?step=install&downloaded=1">→ Jetzt zur Installation</a>
-                        </div>
-                    </body>
-                    </html>
-                    <?php
+                    // Verwende HTML-Meta-Redirect (kompatibel mit Alfahosting)
+                    echo '<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="1;url=install.php?step=install&downloaded=1">
+    <title>Download erfolgreich - Weiterleitung...</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .redirect-box {
+            text-align: center;
+            padding: 40px;
+            background: #2a2a2a;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #404040;
+            border-top: 4px solid #007AFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h1 { color: #00c853; margin-bottom: 10px; }
+        p { color: #cccccc; }
+        a {
+            color: #007AFF;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #007AFF;
+            color: white;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="redirect-box">
+        <div class="spinner"></div>
+        <h1>✅ Download erfolgreich!</h1>
+        <p>52 Dateien wurden installiert.</p>
+        <p>Du wirst automatisch weitergeleitet...</p>
+        <a href="install.php?step=install&downloaded=1">→ Jetzt zur Installation</a>
+    </div>
+</body>
+</html>';
                     exit;
                     
                 } else {
