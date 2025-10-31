@@ -11,19 +11,72 @@ set_time_limit(300); // 5 Minuten
 ini_set('max_execution_time', 300);
 ini_set('memory_limit', '256M');
 
-// ============================================
-// LOGGING-SYSTEM
-// ============================================
-
-// Erstelle logs-Ordner falls nicht vorhanden
+// Erstelle logs-Ordner FÜR ERROR HANDLER (muss vor dem Error Handler sein!)
 $logDir = __DIR__ . '/logs';
 if (!is_dir($logDir)) {
     @mkdir($logDir, 0755, true);
     @file_put_contents($logDir . '/.htaccess', "Deny from all\n");
 }
 
-// Log-Datei erstellen (täglich neue Datei)
+// Log-Datei für Error Handler
 $logFile = $logDir . '/install_' . date('Y-m-d') . '.log';
+
+// ERROR HANDLER - Fängt ALLE PHP-Fehler ab (inkl. Fatal Errors vor dem eigentlichen Logging)
+set_error_handler(function($errno, $errstr, $errfile, $errline) use ($logFile) {
+    $timestamp = date('Y-m-d H:i:s');
+    $errorType = '';
+    switch ($errno) {
+        case E_ERROR: $errorType = 'FATAL ERROR'; break;
+        case E_WARNING: $errorType = 'WARNING'; break;
+        case E_PARSE: $errorType = 'PARSE ERROR'; break;
+        case E_NOTICE: $errorType = 'NOTICE'; break;
+        case E_CORE_ERROR: $errorType = 'CORE ERROR'; break;
+        case E_CORE_WARNING: $errorType = 'CORE WARNING'; break;
+        case E_COMPILE_ERROR: $errorType = 'COMPILE ERROR'; break;
+        case E_COMPILE_WARNING: $errorType = 'COMPILE WARNING'; break;
+        case E_USER_ERROR: $errorType = 'USER ERROR'; break;
+        case E_USER_WARNING: $errorType = 'USER WARNING'; break;
+        case E_USER_NOTICE: $errorType = 'USER NOTICE'; break;
+        default: $errorType = "ERROR ($errno)"; break;
+    }
+    $logEntry = "[$timestamp] [$errorType] $errstr\n";
+    $logEntry .= "[$timestamp] [$errorType] File: $errfile\n";
+    $logEntry .= "[$timestamp] [$errorType] Line: $errline\n";
+    @file_put_contents($logFile, $logEntry, FILE_APPEND);
+    
+    // Zeige auch im Browser (falls möglich)
+    if (ini_get('display_errors')) {
+        echo "<div style='background: #ff0000; color: white; padding: 20px; margin: 20px; border-radius: 10px;'>";
+        echo "<strong>[$errorType]</strong><br>";
+        echo "$errstr<br>";
+        echo "<small>File: $errfile<br>Line: $errline</small><br>";
+        echo "<small>Log: logs/install_" . date('Y-m-d') . ".log</small>";
+        echo "</div>";
+    }
+    
+    // Fatal Errors nicht unterdrücken
+    if ($errno === E_ERROR || $errno === E_PARSE || $errno === E_CORE_ERROR || $errno === E_COMPILE_ERROR) {
+        return false; // Weiterleiten an Standard PHP Error Handler
+    }
+    return true; // Fehler behandelt
+});
+
+// Shutdown Handler - Fängt Fatal Errors ab, die nicht vom Error Handler gefangen werden
+register_shutdown_function(function() use ($logFile) {
+    $error = error_get_last();
+    if ($error !== NULL && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        $timestamp = date('Y-m-d H:i:s');
+        $logEntry = "[$timestamp] [FATAL ERROR - SHUTDOWN] " . $error['message'] . "\n";
+        $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] File: " . $error['file'] . "\n";
+        $logEntry .= "[$timestamp] [FATAL ERROR - SHUTDOWN] Line: " . $error['line'] . "\n";
+        @file_put_contents($logFile, $logEntry, FILE_APPEND);
+    }
+});
+
+// ============================================
+// LOGGING-SYSTEM
+// ============================================
+// Hinweis: $logDir und $logFile wurden bereits oben definiert (für Error Handler)
 
 /**
  * Schreibt eine Nachricht ins Log-File
@@ -58,7 +111,13 @@ writeLog('PHP Version: ' . PHP_VERSION);
 writeLog('Server: ' . ($_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'));
 writeLog('Request URI: ' . ($_SERVER['REQUEST_URI'] ?? 'Unknown'));
 writeLog('Request Method: ' . ($_SERVER['REQUEST_METHOD'] ?? 'Unknown'));
+writeLog('Working Directory: ' . __DIR__);
+writeLog('Script File: ' . __FILE__);
+writeLog('Memory Limit: ' . ini_get('memory_limit'));
+writeLog('Max Execution Time: ' . ini_get('max_execution_time'));
+writeLog('Loaded Extensions: ' . implode(', ', get_loaded_extensions()));
 writeLog('═══════════════════════════════════════════════════════');
+writeLog('Starte Code-Ausführung...');
 
 // Hilfsfunktion zum Löschen von Verzeichnissen (MUSS ganz am Anfang sein!)
 if (!function_exists('deleteDirectory')) {
@@ -385,8 +444,13 @@ if ($needsDownload && $_SERVER['REQUEST_METHOD'] !== 'POST' && !isset($_GET['ski
 }
 
 // POST-Handler
+writeLog('Prüfe Request-Methode: ' . $_SERVER['REQUEST_METHOD']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    writeLog('POST-Request erkannt');
+    writeLog('POST-Daten: ' . json_encode(array_keys($_POST)));
+    
     if ($step === 'install') {
+        writeLog('Starte Installation...');
         // Installation durchführen
         $db_host = $_POST['db_host'] ?? '127.0.0.1';
         $db_port = $_POST['db_port'] ?? '3307';
@@ -396,9 +460,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $admin_email = $_POST['admin_email'] ?? 'admin@stammtisch.de';
         $admin_password = $_POST['admin_password'] ?? '';
         
+        writeLog("DB-Host: $db_host");
+        writeLog("DB-Port: $db_port");
+        writeLog("DB-Name: " . (empty($db_name) ? 'LEER' : 'gesetzt'));
+        writeLog("DB-User: " . (empty($db_user) ? 'LEER' : 'gesetzt'));
+        writeLog("Admin-Email: $admin_email");
+        
         if (empty($db_name) || empty($db_user) || empty($admin_password)) {
+            writeLog('FEHLER: Nicht alle Pflichtfelder ausgefüllt');
             $error = 'Bitte fülle alle Pflichtfelder aus.';
         } else {
+            writeLog('Alle Felder ausgefüllt - starte Datenbankverbindung...');
             try {
                 // Teste DB-Verbindung
                 $dsn = "mysql:host=$db_host;port=$db_port;charset=utf8mb4";
@@ -616,9 +688,14 @@ PHP;
                 writeErrorLog('Fehler bei Installation', $e);
                 $error = 'Fehler: ' . $e->getMessage();
                 $output[] = 'Log-Datei: logs/install_' . date('Y-m-d') . '.log';
+            } catch (Error $e) {
+                writeErrorLog('PHP Fatal Error bei Installation', $e);
+                $error = 'PHP Fehler: ' . $e->getMessage() . ' in Zeile ' . $e->getLine();
+                $output[] = 'Log-Datei: logs/install_' . date('Y-m-d') . '.log';
             }
         }
     } elseif ($step === 'update') {
+        writeLog('Update-Modus gestartet');
         // Update durchführen (via Git oder ZIP-Download)
         $output = [];
         $returnCode = 0;
