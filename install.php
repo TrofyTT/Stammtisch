@@ -197,11 +197,12 @@ PHP;
             } else {
                 // Lade ZIP von GitHub (verschiedene URL-Formate versuchen)
                 // Repository: https://github.com/TrofyTT/Stammtisch.git
+                // Hinweis: Für private Repos benötigt man einen Token, daher versuchen wir öffentliche URLs
                 $zipUrls = [
-                    'https://codeload.github.com/TrofyTT/Stammtisch/zip/refs/heads/main',
-                    'https://github.com/TrofyTT/Stammtisch/archive/refs/heads/main.zip',
                     'https://github.com/TrofyTT/Stammtisch/archive/main.zip',
-                    'https://github.com/TrofyTT/Stammtisch/archive/heads/main.zip'
+                    'https://github.com/TrofyTT/Stammtisch/archive/refs/heads/main.zip',
+                    'https://codeload.github.com/TrofyTT/Stammtisch/zip/refs/heads/main',
+                    'https://codeload.github.com/TrofyTT/Stammtisch/zip/main'
                 ];
                 $zipFile = $gitDir . '/update_temp.zip';
                 $extractDir = $gitDir . '/update_temp';
@@ -744,11 +745,25 @@ function deleteDirectory($dir) {
                         <li>✅ ZIP-Download (falls Git nicht verfügbar)</li>
                     </ul>
                     <strong>Kein SSH-Zugriff nötig!</strong>
+                    <?php if (!is_dir(__DIR__ . '/.git')): ?>
+                        <br><br>
+                        <strong>⚠️ Hinweis:</strong> Falls das Repository privat ist, könnte der ZIP-Download fehlschlagen. 
+                        In diesem Fall nutze den Update-Button im Admin-Panel oder lade die Dateien manuell per FTP hoch.
+                    <?php endif; ?>
                 </div>
                 
                 <form method="POST">
                     <button type="submit" class="btn-install">🔄 Update von GitHub laden</button>
                 </form>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #1a1a1a; border-radius: 8px; border: 1px solid #404040;">
+                    <strong style="color: #ffffff; display: block; margin-bottom: 10px;">💡 Alternative Methoden:</strong>
+                    <ul style="margin: 0 0 0 20px; color: #aaaaaa; font-size: 14px; line-height: 1.8;">
+                        <li><strong>Admin-Panel:</strong> Nach dem Login kannst du im Admin-Bereich ebenfalls Updates durchführen</li>
+                        <li><strong>FTP Upload:</strong> Lade einfach die geänderten Dateien per FTP hoch</li>
+                        <li><strong>Git (falls SSH verfügbar):</strong> <code>git pull origin main</code></li>
+                    </ul>
+                </div>
                 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
                     <p style="color: var(--text-secondary); font-size: 14px;">
