@@ -364,14 +364,11 @@ function renderWinners(alltimeWinner, lastWinner) {
         html += `
             <div class="ranking-item">
                 <div class="ranking-label">All-Time</div>
-                <div class="dashboard-player-card">
+                <div class="dashboard-player-card-vertical">
+                    <div class="dashboard-player-name">${escapeHtml(alltimeWinner.name)}</div>
                     <img src="${avatarUrl}" alt="${escapeHtml(alltimeWinner.name)}" class="dashboard-player-avatar" style="border-color: ${winnerColor};">
-                    <div class="dashboard-player-info">
-                        <div class="dashboard-player-name">${escapeHtml(alltimeWinner.name)}</div>
-                        <div class="dashboard-player-points" style="color: ${winnerColor};">
-                            ${alltimeWinner.total_points || 0} Punkte
-                        </div>
-                        <div class="dashboard-player-avg">Ø ${avgPoints} pro Spiel</div>
+                    <div class="dashboard-player-stats" style="color: ${winnerColor};">
+                        ${alltimeWinner.total_points || 0} Punkte - Ø ${avgPoints} pro Spiel
                     </div>
                 </div>
             </div>
@@ -388,14 +385,11 @@ function renderWinners(alltimeWinner, lastWinner) {
         html += `
             <div class="ranking-item">
                 <div class="ranking-label">Letzter Stammtisch</div>
-                <div class="dashboard-player-card">
+                <div class="dashboard-player-card-vertical">
+                    <div class="dashboard-player-name">${escapeHtml(lastWinner.name)}</div>
                     <img src="${avatarUrl}" alt="${escapeHtml(lastWinner.name)}" class="dashboard-player-avatar" style="border-color: ${winnerColor};">
-                    <div class="dashboard-player-info">
-                        <div class="dashboard-player-name">${escapeHtml(lastWinner.name)}</div>
-                        <div class="dashboard-player-points" style="color: ${winnerColor};">
-                            ${lastWinner.total_points || 0} Punkte
-                        </div>
-                        <div class="dashboard-player-avg">Einzelnes Spiel</div>
+                    <div class="dashboard-player-stats" style="color: ${winnerColor};">
+                        ${lastWinner.total_points || 0} Punkte
                     </div>
                 </div>
             </div>
@@ -429,14 +423,11 @@ function renderLosers(alltimeLoser, lastLoser) {
         html += `
             <div class="ranking-item">
                 <div class="ranking-label">All-Time</div>
-                <div class="dashboard-player-card">
+                <div class="dashboard-player-card-vertical">
+                    <div class="dashboard-player-name">${escapeHtml(alltimeLoser.name)}</div>
                     <img src="${avatarUrl}" alt="${escapeHtml(alltimeLoser.name)}" class="dashboard-player-avatar" style="border-color: ${loserColor};">
-                    <div class="dashboard-player-info">
-                        <div class="dashboard-player-name">${escapeHtml(alltimeLoser.name)}</div>
-                        <div class="dashboard-player-points" style="color: ${loserColor};">
-                            ${alltimeLoser.total_points || 0} Punkte
-                        </div>
-                        <div class="dashboard-player-avg">Ø ${avgPoints} pro Spiel</div>
+                    <div class="dashboard-player-stats" style="color: ${loserColor};">
+                        ${alltimeLoser.total_points || 0} Punkte - Ø ${avgPoints} pro Spiel
                     </div>
                 </div>
             </div>
@@ -453,14 +444,11 @@ function renderLosers(alltimeLoser, lastLoser) {
         html += `
             <div class="ranking-item">
                 <div class="ranking-label">Letzter Stammtisch</div>
-                <div class="dashboard-player-card">
+                <div class="dashboard-player-card-vertical">
+                    <div class="dashboard-player-name">${escapeHtml(lastLoser.name)}</div>
                     <img src="${avatarUrl}" alt="${escapeHtml(lastLoser.name)}" class="dashboard-player-avatar" style="border-color: ${loserColor};">
-                    <div class="dashboard-player-info">
-                        <div class="dashboard-player-name">${escapeHtml(lastLoser.name)}</div>
-                        <div class="dashboard-player-points" style="color: ${loserColor};">
-                            ${lastLoser.total_points || 0} Punkte
-                        </div>
-                        <div class="dashboard-player-avg">Einzelnes Spiel</div>
+                    <div class="dashboard-player-stats" style="color: ${loserColor};">
+                        ${lastLoser.total_points || 0} Punkte
                     </div>
                 </div>
             </div>

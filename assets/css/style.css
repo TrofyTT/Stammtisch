@@ -2472,6 +2472,17 @@ body {
     position: relative;
 }
 
+.dashboard-player-card-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 20px 15px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+}
+
 .dashboard-player-avatar {
     width: 60px;
     height: 60px;
@@ -2495,6 +2506,11 @@ body {
 .dashboard-player-points {
     font-size: 20px;
     font-weight: 700;
+}
+
+.dashboard-player-stats {
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .dashboard-player-avg {
