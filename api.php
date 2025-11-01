@@ -919,60 +919,45 @@ try {
             break;
             
         case 'get_last_stammtisch_game_stats':
-            // Finde letzten Stammtisch-Termin
+            // Finde letztes beendetes Spiel (unabhängig von Terminen)
             $stmt = $db->query("
                 SELECT id, name, datum
-                FROM termine
-                ORDER BY datum DESC, uhrzeit DESC
+                FROM spiele
+                WHERE status = 'beendet'
+                ORDER BY datum DESC, created_at DESC
                 LIMIT 1
             ");
-            $lastTermin = $stmt->fetch();
+            $lastSpiel = $stmt->fetch();
 
             $lastWinner = null;
             $lastLoser = null;
 
-            if ($lastTermin) {
-                // Finde alle Spiele von diesem Datum
+            if ($lastSpiel) {
+                // Finde alle Spieler mit Punkten vom letzten Spiel
                 $stmt = $db->prepare("
-                    SELECT s.id, s.name, s.status
-                    FROM spiele s
-                    WHERE DATE(s.datum) = DATE(?)
-                    AND s.status = 'beendet'
-                    ORDER BY s.created_at DESC
+                    SELECT
+                        u.id,
+                        u.name,
+                        u.avatar,
+                        u.color,
+                        SUM(sr.punkte) as total_points
+                    FROM spiel_teilnahme st
+                    JOIN users u ON st.user_id = u.id
+                    LEFT JOIN spiel_runden sr ON st.id = sr.spiel_teilnahme_id
+                    WHERE st.spiel_id = ?
+                    GROUP BY st.id, u.id, u.name, u.avatar, u.color
+                    ORDER BY total_points ASC
                 ");
-                $stmt->execute([$lastTermin['datum']]);
-                $spiele = $stmt->fetchAll();
+                $stmt->execute([$lastSpiel['id']]);
+                $players = $stmt->fetchAll();
 
-                if (!empty($spiele)) {
-                    // Nimm das letzte Spiel
-                    $spiel = $spiele[0];
+                if (!empty($players)) {
+                    // Gewinner = niedrigste Punkte (bei 6 Nimmt)
+                    $lastWinner = $players[0];
 
-                    // Finde alle Spieler mit Punkten
-                    $stmt = $db->prepare("
-                        SELECT
-                            u.id,
-                            u.name,
-                            u.avatar,
-                            u.color,
-                            SUM(sr.punkte) as total_points
-                        FROM spiel_teilnahme st
-                        JOIN users u ON st.user_id = u.id
-                        LEFT JOIN spiel_runden sr ON st.id = sr.spiel_teilnahme_id
-                        WHERE st.spiel_id = ?
-                        GROUP BY st.id, u.id, u.name, u.avatar, u.color
-                        ORDER BY total_points ASC
-                    ");
-                    $stmt->execute([$spiel['id']]);
-                    $players = $stmt->fetchAll();
-
-                    if (!empty($players)) {
-                        // Gewinner = niedrigste Punkte (bei 6 Nimmt)
-                        $lastWinner = $players[0];
-
-                        // Verlierer = höchste Punkte
-                        if (count($players) > 1) {
-                            $lastLoser = $players[count($players) - 1];
-                        }
+                    // Verlierer = höchste Punkte
+                    if (count($players) > 1) {
+                        $lastLoser = $players[count($players) - 1];
                     }
                 }
             }
