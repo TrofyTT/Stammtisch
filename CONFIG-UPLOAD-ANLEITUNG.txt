@@ -1,0 +1,80 @@
+═══════════════════════════════════════════════════════════════
+   ANLEITUNG: config.local.php auf Server hochladen
+═══════════════════════════════════════════════════════════════
+
+PROBLEM:
+Datenbankverbindung fehlgeschlagen auf https://franggn.de
+
+LÖSUNG:
+Die Datei config.local.php fehlt auf dem Server oder hat falsche Daten.
+
+═══════════════════════════════════════════════════════════════
+
+OPTION 1: Mit 127.0.0.1 (Standard)
+═══════════════════════════════════════════════════════════════
+
+1. Öffne die Datei:
+   config.local-UPLOAD.php
+
+2. Kopiere den KOMPLETTEN Inhalt (inkl. <?php am Anfang)
+
+3. Per FTP auf Server:
+   - Verbinde dich mit franggn.de per FTP
+   - Gehe in den Ordner: /httpdocs/
+   - Erstelle eine NEUE Datei: config.local.php
+   - Füge den kopierten Inhalt ein
+   - Speichern!
+
+4. Teste: https://franggn.de
+
+═══════════════════════════════════════════════════════════════
+
+OPTION 2: Mit localhost (Falls Option 1 nicht funktioniert)
+═══════════════════════════════════════════════════════════════
+
+1. Öffne die Datei:
+   config.local-UPLOAD-LOCALHOST.php
+
+2. Kopiere den KOMPLETTEN Inhalt (inkl. <?php am Anfang)
+
+3. Per FTP auf Server:
+   - Lösche die alte config.local.php (falls vorhanden)
+   - Erstelle eine NEUE Datei: config.local.php
+   - Füge den kopierten Inhalt ein
+   - Speichern!
+
+4. Teste: https://franggn.de
+
+═══════════════════════════════════════════════════════════════
+
+WICHTIG:
+═══════════════════════════════════════════════════════════════
+
+✓ Dateiname muss EXAKT sein: config.local.php
+✓ Im richtigen Ordner: /httpdocs/
+✓ Kompletter Inhalt inkl. <?php am Anfang!
+✓ Keine zusätzlichen Leerzeilen am Ende
+
+PRÜFEN OB ES FUNKTIONIERT:
+═══════════════════════════════════════════════════════════════
+
+1. Gehe zu: https://franggn.de/dashboard.php
+2. Sollte KEINE Fehlermeldung mehr kommen
+3. Du solltest die Login-Seite oder das Dashboard sehen
+
+ALTERNATIVE: Datenbank-Credentials prüfen
+═══════════════════════════════════════════════════════════════
+
+Falls BEIDE Optionen nicht funktionieren, prüfe im Alfahosting-Panel:
+
+1. Login: https://kas.alfahosting.de
+2. MySQL-Datenbanken
+3. Prüfe:
+   - Datenbankname: kdph7973_sven
+   - Benutzername: kdph7973_svenni
+   - Host: 127.0.0.1 oder localhost?
+   - Port: 3307 oder 3306?
+
+Falls die Daten ANDERS sind, ändere sie in der config.local.php!
+
+═══════════════════════════════════════════════════════════════
