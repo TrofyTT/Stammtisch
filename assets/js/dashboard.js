@@ -357,6 +357,9 @@ function renderWinners(alltimeWinner, lastWinner) {
             ? `uploads/avatars/${escapeHtml(alltimeWinner.avatar)}`
             : 'assets/img/default-avatar.svg';
         const winnerColor = alltimeWinner.color || '#007AFF';
+        const avgPoints = alltimeWinner.games_played > 0
+            ? Math.round(alltimeWinner.total_points / alltimeWinner.games_played)
+            : 0;
 
         html += `
             <div class="ranking-item">
@@ -368,8 +371,8 @@ function renderWinners(alltimeWinner, lastWinner) {
                         <div class="dashboard-player-points" style="color: ${winnerColor};">
                             ${alltimeWinner.total_points || 0} Punkte
                         </div>
+                        <div class="dashboard-player-avg">Ø ${avgPoints} pro Spiel</div>
                     </div>
-                    <div class="dashboard-player-badge winner-badge">👑</div>
                 </div>
             </div>
         `;
@@ -392,8 +395,8 @@ function renderWinners(alltimeWinner, lastWinner) {
                         <div class="dashboard-player-points" style="color: ${winnerColor};">
                             ${lastWinner.total_points || 0} Punkte
                         </div>
+                        <div class="dashboard-player-avg">Einzelnes Spiel</div>
                     </div>
-                    <div class="dashboard-player-badge winner-badge">👑</div>
                 </div>
             </div>
         `;
@@ -419,6 +422,9 @@ function renderLosers(alltimeLoser, lastLoser) {
             ? `uploads/avatars/${escapeHtml(alltimeLoser.avatar)}`
             : 'assets/img/default-avatar.svg';
         const loserColor = alltimeLoser.color || '#FF3B30';
+        const avgPoints = alltimeLoser.games_played > 0
+            ? Math.round(alltimeLoser.total_points / alltimeLoser.games_played)
+            : 0;
 
         html += `
             <div class="ranking-item">
@@ -430,8 +436,8 @@ function renderLosers(alltimeLoser, lastLoser) {
                         <div class="dashboard-player-points" style="color: ${loserColor};">
                             ${alltimeLoser.total_points || 0} Punkte
                         </div>
+                        <div class="dashboard-player-avg">Ø ${avgPoints} pro Spiel</div>
                     </div>
-                    <div class="dashboard-player-badge loser-badge">😢</div>
                 </div>
             </div>
         `;
@@ -454,8 +460,8 @@ function renderLosers(alltimeLoser, lastLoser) {
                         <div class="dashboard-player-points" style="color: ${loserColor};">
                             ${lastLoser.total_points || 0} Punkte
                         </div>
+                        <div class="dashboard-player-avg">Einzelnes Spiel</div>
                     </div>
-                    <div class="dashboard-player-badge loser-badge">😢</div>
                 </div>
             </div>
         `;

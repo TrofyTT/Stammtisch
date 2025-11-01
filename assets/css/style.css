@@ -2497,6 +2497,12 @@ body {
     font-weight: 700;
 }
 
+.dashboard-player-avg {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
 .dashboard-player-badge {
     font-size: 32px;
     flex-shrink: 0;

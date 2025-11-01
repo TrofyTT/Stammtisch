@@ -969,7 +969,8 @@ try {
                     u.name,
                     u.avatar,
                     u.color,
-                    SUM(sr.punkte) as total_points
+                    SUM(sr.punkte) as total_points,
+                    COUNT(DISTINCT st.spiel_id) as games_played
                 FROM users u
                 JOIN spiel_teilnahme st ON u.id = st.user_id
                 JOIN spiele s ON st.spiel_id = s.id
@@ -989,7 +990,8 @@ try {
                     u.name,
                     u.avatar,
                     u.color,
-                    SUM(sr.punkte) as total_points
+                    SUM(sr.punkte) as total_points,
+                    COUNT(DISTINCT st.spiel_id) as games_played
                 FROM users u
                 JOIN spiel_teilnahme st ON u.id = st.user_id
                 JOIN spiele s ON st.spiel_id = s.id
