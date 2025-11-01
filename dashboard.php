@@ -80,8 +80,69 @@ $user = getCurrentUser();
         <div class="stats-grid" id="quickStats">
             <!-- Wird per JS befüllt -->
         </div>
+
+        <!-- Termine Section (unten) -->
+        <div class="dashboard-header">
+            <h2>Termine</h2>
+            <button class="btn btn-primary" id="newTerminBtn">+ Neuer Termin</button>
+        </div>
+
+        <!-- Termine Liste -->
+        <div class="termine-container" id="termineList">
+            <!-- Wird per JS befüllt -->
+        </div>
     </div>
-    
+
+    <!-- Modal für neuen Termin -->
+    <div class="modal" id="terminModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Neuer Termin</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="terminForm">
+                <input type="hidden" id="termin_id" name="termin_id">
+                <div class="form-group">
+                    <label for="termin_name">Name (z.B. "Stammtischrunde 4")</label>
+                    <input type="text" id="termin_name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="termin_ort">Ort</label>
+                    <input type="text" id="termin_ort" name="ort" required>
+                </div>
+                <div class="form-group">
+                    <label for="termin_datum">Datum</label>
+                    <input type="date" id="termin_datum" name="datum" required>
+                </div>
+                <div class="form-group">
+                    <label for="termin_uhrzeit">Uhrzeit</label>
+                    <input type="time" id="termin_uhrzeit" name="uhrzeit" required>
+                </div>
+                <div class="form-group">
+                    <label for="termin_beschreibung">Beschreibung (optional)</label>
+                    <textarea id="termin_beschreibung" name="beschreibung" rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary modal-cancel">Abbrechen</button>
+                    <button type="submit" class="btn btn-primary">Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Anwesenheits-Modal -->
+    <div class="modal" id="anwesenheitModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="anwesenheitTitle">Anwesenheit erfassen</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="anwesenheitContent">
+                <!-- Wird per JS befüllt -->
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/nav.js"></script>
     <script src="assets/js/dashboard.js"></script>
 </body>
