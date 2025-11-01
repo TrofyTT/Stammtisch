@@ -279,7 +279,7 @@ body {
 .btn {
     padding: 12px 24px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
@@ -289,6 +289,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary {
@@ -388,10 +389,11 @@ body {
 .stat-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 15px;
+    border-radius: 18px;
     padding: 20px;
     transition: all 0.3s ease;
     animation: slideUp 0.5s ease backwards;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .stat-card:nth-child(1) { animation-delay: 0.1s; }
@@ -412,7 +414,7 @@ body {
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 30px var(--shadow);
+    box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3), 0 0 20px rgba(0, 122, 255, 0.1);
     border-color: var(--primary);
 }
 
@@ -723,11 +725,12 @@ body {
 .member-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 15px;
+    border-radius: 18px;
     padding: 25px;
     transition: all 0.3s ease;
     text-align: center;
     animation: slideUp 0.5s ease backwards;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .member-card:nth-child(1) { animation-delay: 0.1s; }
@@ -737,7 +740,7 @@ body {
 
 .member-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 30px var(--shadow);
+    box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3), 0 0 20px rgba(0, 122, 255, 0.1);
     border-color: var(--primary);
 }
 
@@ -1006,7 +1009,7 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
+        padding: 8px;
     }
     
     .login-container {
@@ -2074,18 +2077,19 @@ body {
 .game-item {
     background: var(--bg-secondary);
     border: 2px solid var(--border);
-    border-radius: 15px;
+    border-radius: 18px;
     padding: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: all 0.3s ease;
     gap: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .game-item:hover {
     transform: translateX(5px);
-    box-shadow: 0 5px 15px var(--shadow);
+    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.2), 0 0 16px rgba(0, 122, 255, 0.1);
 }
 
 .game-item.active {
@@ -2149,7 +2153,7 @@ body {
     padding: 15px;
     background: rgba(255, 215, 0, 0.1);
     border: 1px solid rgba(255, 215, 0, 0.3);
-    border-radius: 10px;
+    border-radius: 14px;
 }
 
 .game-winner-label {
@@ -2397,15 +2401,16 @@ body {
 .dashboard-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 24px;
     min-height: 300px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
 .dashboard-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 122, 255, 0.3), 0 0 20px rgba(0, 122, 255, 0.1);
 }
 
 .dashboard-card h3 {
@@ -2418,21 +2423,62 @@ body {
     border-bottom: 2px solid var(--border);
 }
 
+/* Winner Card - Grüner Gradient */
+#rankingWinners {
+    background: linear-gradient(135deg, rgba(52, 199, 89, 0.08) 0%, rgba(52, 199, 89, 0.02) 100%);
+    border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+#rankingWinners:hover {
+    box-shadow: 0 8px 32px rgba(52, 199, 89, 0.2), 0 0 20px rgba(52, 199, 89, 0.1);
+}
+
+/* Loser Card - Roter/Pinkischer Gradient */
+#rankingLosers {
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 59, 48, 0.02) 100%);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+#rankingLosers:hover {
+    box-shadow: 0 8px 32px rgba(255, 59, 48, 0.2), 0 0 20px rgba(255, 59, 48, 0.1);
+}
+
 .dashboard-achievement-card {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px;
     background: var(--bg-tertiary);
-    border-radius: 10px;
+    border-radius: 12px;
     margin-bottom: 10px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-achievement-card:hover {
     transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.2);
+}
+
+/* Spiele Achievements Card - Blauer Gradient */
+#gameAchievements {
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.02) 100%);
+    border: 1px solid rgba(0, 122, 255, 0.2);
+}
+
+#gameAchievements:hover {
+    box-shadow: 0 8px 32px rgba(0, 122, 255, 0.2), 0 0 20px rgba(0, 122, 255, 0.1);
+}
+
+/* Stammtisch Achievements Card - Lila Gradient */
+#stammtischAchievements {
+    background: linear-gradient(135deg, rgba(88, 86, 214, 0.08) 0%, rgba(88, 86, 214, 0.02) 100%);
+    border: 1px solid rgba(88, 86, 214, 0.2);
+}
+
+#stammtischAchievements:hover {
+    box-shadow: 0 8px 32px rgba(88, 86, 214, 0.2), 0 0 20px rgba(88, 86, 214, 0.1);
 }
 
 .dashboard-achievement-avatar {
@@ -2487,7 +2533,8 @@ body {
     gap: 8px;
     padding: 16px 12px;
     background: var(--bg-tertiary);
-    border-radius: 12px;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .dashboard-player-avatar {
